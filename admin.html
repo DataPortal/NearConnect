@@ -3,45 +3,44 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NearConnect | Administration</title>
+  <title>NearConnect — Admin</title>
   <link rel="stylesheet" href="style.css" />
 </head>
-<body class="app-shell admin-shell">
-  <div class="bg-blur blur-a"></div>
-  <div class="bg-blur blur-b"></div>
+<body class="theme-dark">
+  <div class="bg-orb orb-a"></div>
+  <div class="bg-orb orb-c"></div>
 
   <header class="topbar">
     <div class="container topbar-inner">
-      <a href="index.html" class="brand-link">
+      <a href="index.html" class="brand brand-link">
         <div class="brand-mark">N</div>
-        <div class="brand-copy">
+        <div>
           <h1>NearConnect Admin</h1>
-          <p>Créer et gérer les espaces</p>
+          <p>Gestion professionnelle des espaces</p>
         </div>
       </a>
 
       <nav class="top-actions">
-        <a class="btn btn-ghost" href="index.html">Espace public</a>
-        <button id="adminRefreshBtn" class="btn btn-soft" type="button">Actualiser</button>
+        <a href="index.html" class="btn btn-ghost">Participant</a>
+        <button id="adminRefreshBtn" class="btn btn-soft">Actualiser</button>
       </nav>
     </div>
   </header>
 
   <main class="container page-grid">
     <section class="panel hero-panel">
-      <span class="eyebrow">Administration</span>
-      <h2>Créez un espace, partagez-le par QR code et gérez sa visibilité.</h2>
+      <div class="hero-badge">Administration</div>
+      <h2>Créez, sécurisez et diffusez vos espaces NearConnect.</h2>
       <p>
-        Cette interface est réservée à l’organisateur du lieu ou de l’événement.
+        Générez un espace temporaire, obtenez un QR code d’accès, consultez les profils,
+        modérez les entrées et fermez l’espace en fin d’usage.
       </p>
     </section>
 
     <section class="panel">
-      <div class="section-head">
-        <div>
-          <h3>Créer un espace</h3>
-          <p>Configuration initiale de l’espace NearConnect</p>
-        </div>
+      <div class="section-heading">
+        <h3>Créer un espace</h3>
+        <p>Un code public pour rejoindre, un PIN privé pour administrer.</p>
       </div>
 
       <form id="createSpaceForm" class="form-stack">
@@ -52,117 +51,102 @@
 
         <div class="field">
           <label for="spaceDescription">Description</label>
-          <textarea id="spaceDescription" rows="3" placeholder="Ex: Rencontres professionnelles du lieu"></textarea>
+          <textarea id="spaceDescription" rows="4" placeholder="Ex: Session de networking professionnel"></textarea>
         </div>
 
-        <div class="field">
-          <label for="spaceExpiryHours">Durée de vie (heures)</label>
-          <input id="spaceExpiryHours" type="number" min="1" max="168" value="24" required />
+        <div class="field two-cols">
+          <div>
+            <label for="adminPin">PIN admin</label>
+            <input id="adminPin" type="password" placeholder="Ex: 2468" required />
+          </div>
+          <div>
+            <label for="expiryHours">Durée de vie (heures)</label>
+            <input id="expiryHours" type="number" min="1" max="168" value="24" required />
+          </div>
         </div>
 
-        <div class="field">
-          <label for="adminPin">Code admin</label>
-          <input id="adminPin" type="password" minlength="4" placeholder="Ex: 2468" required />
-        </div>
-
-        <div class="field">
-          <label for="maxProfiles">Nombre max de profils</label>
-          <input id="maxProfiles" type="number" min="10" max="1000" value="100" required />
-        </div>
-
-        <div class="row-actions">
-          <button class="btn btn-primary" type="submit">Créer l’espace</button>
+        <div class="actions">
+          <button type="submit" class="btn btn-primary">Créer l’espace</button>
         </div>
       </form>
+
+      <div id="createdSpaceBox" class="info-box hidden"></div>
     </section>
 
     <section class="panel">
-      <div class="section-head">
-        <div>
-          <h3>Ouvrir la gestion d’un espace</h3>
-          <p>Connexion d’administration temporaire</p>
-        </div>
+      <div class="section-heading">
+        <h3>Ouvrir une session admin</h3>
+        <p>Chargez un espace existant avec le code public et le PIN admin.</p>
       </div>
 
       <form id="adminLoginForm" class="form-stack">
-        <div class="field">
-          <label for="manageCode">Code espace</label>
-          <input id="manageCode" type="text" placeholder="Ex: NC-4H7K2P" required />
+        <div class="field two-cols">
+          <div>
+            <label for="loginSpaceCode">Code espace</label>
+            <input id="loginSpaceCode" type="text" placeholder="Ex: NC-4G7K9Q" required />
+          </div>
+          <div>
+            <label for="loginPin">PIN admin</label>
+            <input id="loginPin" type="password" placeholder="Entrer le PIN" required />
+          </div>
         </div>
-
-        <div class="field">
-          <label for="managePin">Code admin</label>
-          <input id="managePin" type="password" placeholder="Entrer le code admin" required />
-        </div>
-
-        <div class="row-actions">
-          <button class="btn btn-primary" type="submit">Ouvrir la gestion</button>
+        <div class="actions">
+          <button type="submit" class="btn btn-primary">Ouvrir la session admin</button>
+          <button id="logoutAdminBtn" type="button" class="btn btn-ghost">Fermer la session</button>
         </div>
       </form>
     </section>
 
     <section id="adminSpacePanel" class="panel hidden">
-      <div class="section-head">
+      <div class="section-heading">
+        <h3>Espace administré</h3>
+        <p>Détails et QR code de diffusion</p>
+      </div>
+
+      <div class="admin-layout">
         <div>
-          <h3>Espace administré</h3>
-          <p>Détails, QR code et actions</p>
+          <div id="adminSpaceInfo" class="info-box"></div>
         </div>
-      </div>
-
-      <div id="adminSpaceInfo" class="info-card"></div>
-
-      <div class="admin-grid">
-        <div class="mini-panel">
-          <h4>QR code d’accès</h4>
-          <div id="qrBox" class="qr-box"></div>
-          <p class="mini-help">Les participants peuvent scanner ce QR code pour rejoindre l’espace.</p>
-        </div>
-
-        <div class="mini-panel">
-          <h4>Lien de partage</h4>
-          <div id="shareLinkBox" class="share-link-box"></div>
-          <div class="row-actions compact">
-            <button id="copyLinkBtn" class="btn btn-soft" type="button">Copier le lien</button>
+        <div>
+          <div class="qr-card">
+            <h4>QR code d’accès</h4>
+            <div id="qrCanvasWrap" class="qr-wrap"></div>
+            <div id="publicJoinUrl" class="join-url"></div>
           </div>
-        </div>
-      </div>
-
-      <div class="admin-grid">
-        <div class="mini-panel">
-          <h4>Actions admin</h4>
-          <div class="row-actions compact">
-            <button id="loadAdminProfilesBtn" class="btn btn-soft" type="button">Voir les profils</button>
-            <button id="closeSpaceBtn" class="btn btn-danger" type="button">Fermer l’espace</button>
-            <button id="logoutAdminBtn" class="btn btn-ghost" type="button">Déconnexion admin</button>
-          </div>
-        </div>
-
-        <div class="mini-panel">
-          <h4>Statistiques</h4>
-          <div id="adminStatsBox" class="stats-box"></div>
         </div>
       </div>
     </section>
 
     <section id="adminProfilesPanel" class="panel hidden">
-      <div class="section-head">
-        <div>
-          <h3>Profils enregistrés</h3>
-          <p>Vue de modération légère</p>
-        </div>
+      <div class="section-heading">
+        <h3>Profils enregistrés</h3>
+        <p>Surveillance et modération de l’espace</p>
       </div>
 
-      <div id="adminProfilesList" class="cards-grid"></div>
+      <div id="adminProfilesMeta" class="subtle-meta"></div>
+      <div id="adminProfilesList" class="card-grid"></div>
     </section>
 
-    <section id="adminMessageSection" class="panel hidden">
-      <div id="adminMessageBox"></div>
+    <section id="adminActionsPanel" class="panel hidden">
+      <div class="section-heading">
+        <h3>Actions d’administration</h3>
+        <p>Clôture et maintenance de l’espace</p>
+      </div>
+
+      <div class="actions">
+        <button id="closeSpaceBtn" class="btn btn-danger">Fermer l’espace</button>
+      </div>
+    </section>
+
+    <section id="adminMessagePanel" class="panel hidden">
+      <div id="adminMessageBox" class="message-box"></div>
     </section>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
   <script src="supabase.js"></script>
+  <script src="utils.js"></script>
   <script src="admin.js"></script>
 </body>
 </html>
