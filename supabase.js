@@ -1,4 +1,5 @@
-const SUPABASE_URL = "https://vtezfkktbrtdnxeayjjm.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ0ZXpma2t0YnJ0ZG54ZWF5amptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0NTc1NjUsImV4cCI6MjA5MTAzMzU2NX0.3meppPrHmKh9c2rWzfzCGjWi0dXQ34IHbdrDohyHSxo";
-
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+window.sb = supabase.createClient(
+  window.NEARCONNECT_SUPABASE_URL,
+  window.NEARCONNECT_SUPABASE_ANON_KEY,
+  { auth: { persistSession: false } }
+);
