@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NearConnect</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="bg-orb orb-1"></div>
+  <div class="bg-orb orb-2"></div>
+
+  <header class="app-header">
+    <div class="container header-inner">
+      <div class="brand">
+        <div class="brand-logo">N</div>
+        <div>
+          <h1>NearConnect</h1>
+          <p>Connecter les personnes présentes dans un même lieu</p>
+        </div>
+      </div>
+      <button id="refreshBtn" class="btn btn-secondary">Actualiser</button>
+    </div>
+  </header>
+
+  <main class="container main-grid">
+    <section class="card hero-card">
+      <div class="badge">MVP</div>
+      <h2>Créez un espace, partagez le code, connectez les gens.</h2>
+      <p>
+        NearConnect permet à des personnes présentes dans un même endroit de publier
+        un pseudo, un contact WhatsApp et leur disponibilité pour continuer les échanges en dehors de l’application.
+      </p>
+    </section>
+
+    <section class="card">
+      <div class="section-title">
+        <h3>Créer un espace</h3>
+        <p>Pour organisateur, hôte ou animateur</p>
+      </div>
+
+      <form id="createSpaceForm" class="form-grid">
+        <div class="field">
+          <label for="spaceName">Nom de l’espace</label>
+          <input type="text" id="spaceName" placeholder="Ex: Networking Kigali" required />
+        </div>
+
+        <div class="field">
+          <label for="spaceDescription">Description</label>
+          <textarea id="spaceDescription" rows="3" placeholder="Ex: Rencontres professionnelles au coworking"></textarea>
+        </div>
+
+        <div class="field">
+          <label for="adminPin">Code admin</label>
+          <input type="password" id="adminPin" placeholder="Ex: 2468" required />
+        </div>
+
+        <div class="field">
+          <label for="spaceExpiryHours">Durée de vie (heures)</label>
+          <input type="number" id="spaceExpiryHours" min="1" max="168" value="24" required />
+        </div>
+
+        <div class="actions">
+          <button type="submit" class="btn btn-primary">Créer l’espace</button>
+        </div>
+      </form>
+
+      <div id="createdSpaceResult" class="result-box hidden"></div>
+    </section>
+
+    <section class="card">
+      <div class="section-title">
+        <h3>Rejoindre un espace</h3>
+        <p>Utilisez le code de l’espace partagé par l’organisateur</p>
+      </div>
+
+      <form id="joinSpaceForm" class="form-grid">
+        <div class="field">
+          <label for="joinCode">Code espace</label>
+          <input type="text" id="joinCode" placeholder="Ex: NC-8F4K2Q" required />
+        </div>
+
+        <div class="actions">
+          <button type="submit" class="btn btn-primary">Rejoindre</button>
+        </div>
+      </form>
+    </section>
+
+    <section id="spaceInfoSection" class="card hidden">
+      <div class="section-title">
+        <h3>Espace actif</h3>
+        <p>Détails de l’espace rejoint</p>
+      </div>
+
+      <div id="spaceInfo" class="space-info"></div>
+    </section>
+
+    <section id="registerSection" class="card hidden">
+      <div class="section-title">
+        <h3>S’inscrire dans l’espace</h3>
+        <p>Publiez votre présence et votre contact WhatsApp</p>
+      </div>
+
+      <form id="registerProfileForm" class="form-grid">
+        <div class="field">
+          <label for="displayName">Nom ou pseudonyme</label>
+          <input type="text" id="displayName" maxlength="50" placeholder="Ex: Hypolite" required />
+        </div>
+
+        <div class="field">
+          <label for="whatsappNumber">Numéro WhatsApp</label>
+          <input type="text" id="whatsappNumber" maxlength="20" placeholder="Ex: 2507XXXXXXXX" required />
+        </div>
+
+        <div class="field">
+          <label for="availability">Disponibilité</label>
+          <select id="availability" required>
+            <option value="">Sélectionner</option>
+            <option value="Disponible maintenant">Disponible maintenant</option>
+            <option value="Disponible plus tard">Disponible plus tard</option>
+            <option value="Disponible pour networking">Disponible pour networking</option>
+            <option value="Disponible pour collaboration">Disponible pour collaboration</option>
+            <option value="Occasionnellement disponible">Occasionnellement disponible</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="shortNote">Message court</label>
+          <textarea id="shortNote" rows="3" maxlength="140" placeholder="Ex: Intéressé par data, innovation, partenariats"></textarea>
+        </div>
+
+        <div class="field checkbox-field">
+          <input type="checkbox" id="consent" required />
+          <label for="consent">
+            J’accepte d’afficher mon nom/pseudo, mon contact et ma disponibilité dans cet espace.
+          </label>
+        </div>
+
+        <div class="actions">
+          <button type="submit" class="btn btn-primary">Publier mon profil</button>
+          <button type="button" id="hideMyProfileBtn" class="btn btn-danger">Masquer mon profil</button>
+        </div>
+      </form>
+    </section>
+
+    <section id="profilesSection" class="card hidden">
+      <div class="section-title">
+        <h3>Personnes présentes</h3>
+        <p>Contacts visibles dans cet espace</p>
+      </div>
+
+      <div id="profilesMeta" class="profiles-meta"></div>
+      <div id="profilesList" class="profiles-grid"></div>
+    </section>
+
+    <section id="adminSection" class="card hidden">
+      <div class="section-title">
+        <h3>Administration de l’espace</h3>
+        <p>Fermer l’espace avec le code admin</p>
+      </div>
+
+      <form id="closeSpaceForm" class="form-grid">
+        <div class="field">
+          <label for="closePin">Code admin</label>
+          <input type="password" id="closePin" placeholder="Entrer le code admin" required />
+        </div>
+        <div class="actions">
+          <button type="submit" class="btn btn-danger">Fermer cet espace</button>
+        </div>
+      </form>
+    </section>
+
+    <section id="messageSection" class="card message-card hidden">
+      <div id="messageBox"></div>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <div class="container">
+      <p>NearConnect — MVP de mise en relation de proximité</p>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
