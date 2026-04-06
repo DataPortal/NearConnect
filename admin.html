@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NearConnect | Administration</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="app-shell admin-shell">
+  <div class="bg-blur blur-a"></div>
+  <div class="bg-blur blur-b"></div>
+
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <a href="index.html" class="brand-link">
+        <div class="brand-mark">N</div>
+        <div class="brand-copy">
+          <h1>NearConnect Admin</h1>
+          <p>Créer et gérer les espaces</p>
+        </div>
+      </a>
+
+      <nav class="top-actions">
+        <a class="btn btn-ghost" href="index.html">Espace public</a>
+        <button id="adminRefreshBtn" class="btn btn-soft" type="button">Actualiser</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container page-grid">
+    <section class="panel hero-panel">
+      <span class="eyebrow">Administration</span>
+      <h2>Créez un espace, partagez-le par QR code et gérez sa visibilité.</h2>
+      <p>
+        Cette interface est réservée à l’organisateur du lieu ou de l’événement.
+      </p>
+    </section>
+
+    <section class="panel">
+      <div class="section-head">
+        <div>
+          <h3>Créer un espace</h3>
+          <p>Configuration initiale de l’espace NearConnect</p>
+        </div>
+      </div>
+
+      <form id="createSpaceForm" class="form-stack">
+        <div class="field">
+          <label for="spaceName">Nom de l’espace</label>
+          <input id="spaceName" type="text" placeholder="Ex: Networking Kigali" required />
+        </div>
+
+        <div class="field">
+          <label for="spaceDescription">Description</label>
+          <textarea id="spaceDescription" rows="3" placeholder="Ex: Rencontres professionnelles du lieu"></textarea>
+        </div>
+
+        <div class="field">
+          <label for="spaceExpiryHours">Durée de vie (heures)</label>
+          <input id="spaceExpiryHours" type="number" min="1" max="168" value="24" required />
+        </div>
+
+        <div class="field">
+          <label for="adminPin">Code admin</label>
+          <input id="adminPin" type="password" minlength="4" placeholder="Ex: 2468" required />
+        </div>
+
+        <div class="field">
+          <label for="maxProfiles">Nombre max de profils</label>
+          <input id="maxProfiles" type="number" min="10" max="1000" value="100" required />
+        </div>
+
+        <div class="row-actions">
+          <button class="btn btn-primary" type="submit">Créer l’espace</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel">
+      <div class="section-head">
+        <div>
+          <h3>Ouvrir la gestion d’un espace</h3>
+          <p>Connexion d’administration temporaire</p>
+        </div>
+      </div>
+
+      <form id="adminLoginForm" class="form-stack">
+        <div class="field">
+          <label for="manageCode">Code espace</label>
+          <input id="manageCode" type="text" placeholder="Ex: NC-4H7K2P" required />
+        </div>
+
+        <div class="field">
+          <label for="managePin">Code admin</label>
+          <input id="managePin" type="password" placeholder="Entrer le code admin" required />
+        </div>
+
+        <div class="row-actions">
+          <button class="btn btn-primary" type="submit">Ouvrir la gestion</button>
+        </div>
+      </form>
+    </section>
+
+    <section id="adminSpacePanel" class="panel hidden">
+      <div class="section-head">
+        <div>
+          <h3>Espace administré</h3>
+          <p>Détails, QR code et actions</p>
+        </div>
+      </div>
+
+      <div id="adminSpaceInfo" class="info-card"></div>
+
+      <div class="admin-grid">
+        <div class="mini-panel">
+          <h4>QR code d’accès</h4>
+          <div id="qrBox" class="qr-box"></div>
+          <p class="mini-help">Les participants peuvent scanner ce QR code pour rejoindre l’espace.</p>
+        </div>
+
+        <div class="mini-panel">
+          <h4>Lien de partage</h4>
+          <div id="shareLinkBox" class="share-link-box"></div>
+          <div class="row-actions compact">
+            <button id="copyLinkBtn" class="btn btn-soft" type="button">Copier le lien</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="admin-grid">
+        <div class="mini-panel">
+          <h4>Actions admin</h4>
+          <div class="row-actions compact">
+            <button id="loadAdminProfilesBtn" class="btn btn-soft" type="button">Voir les profils</button>
+            <button id="closeSpaceBtn" class="btn btn-danger" type="button">Fermer l’espace</button>
+            <button id="logoutAdminBtn" class="btn btn-ghost" type="button">Déconnexion admin</button>
+          </div>
+        </div>
+
+        <div class="mini-panel">
+          <h4>Statistiques</h4>
+          <div id="adminStatsBox" class="stats-box"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="adminProfilesPanel" class="panel hidden">
+      <div class="section-head">
+        <div>
+          <h3>Profils enregistrés</h3>
+          <p>Vue de modération légère</p>
+        </div>
+      </div>
+
+      <div id="adminProfilesList" class="cards-grid"></div>
+    </section>
+
+    <section id="adminMessageSection" class="panel hidden">
+      <div id="adminMessageBox"></div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+  <script src="supabase.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>
