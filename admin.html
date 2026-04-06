@@ -3,148 +3,131 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NearConnect — Admin</title>
+  <title>NearConnect Night Admin</title>
   <link rel="stylesheet" href="style.css" />
 </head>
-<body class="theme-dark">
-  <div class="bg-orb orb-a"></div>
-  <div class="bg-orb orb-c"></div>
-
-  <header class="topbar">
-    <div class="container topbar-inner">
-      <a href="index.html" class="brand brand-link">
-        <div class="brand-mark">N</div>
+<body>
+  <header class="header">
+    <div class="container header-inner">
+      <div class="brand">
+        <div class="logo">N</div>
         <div>
-          <h1>NearConnect Admin</h1>
-          <p>Gestion professionnelle des espaces</p>
+          <h1>NearConnect Night Admin</h1>
+          <p>Création et pilotage des espaces</p>
         </div>
-      </a>
-
-      <nav class="top-actions">
-        <a href="index.html" class="btn btn-ghost">Participant</a>
-        <button id="adminRefreshBtn" class="btn btn-soft">Actualiser</button>
-      </nav>
+      </div>
+      <div class="nav">
+        <a class="btn btn-soft" href="index.html">Participant</a>
+      </div>
     </div>
   </header>
 
-  <main class="container page-grid">
-    <section class="panel hero-panel">
-      <div class="hero-badge">Administration</div>
-      <h2>Créez, sécurisez et diffusez vos espaces NearConnect.</h2>
-      <p>
-        Générez un espace temporaire, obtenez un QR code d’accès, consultez les profils,
-        modérez les entrées et fermez l’espace en fin d’usage.
-      </p>
+  <main class="container page">
+    <section class="panel hero">
+      <span class="badge">Admin</span>
+      <h2>Créer, confirmer, fermer et purger un espace</h2>
+      <p>Pour cette base GitHub, l’admin utilise un secret d’application transmis dans l’en-tête <code>x-admin-key</code>. En production, remplace cette logique par une authentification admin dédiée.</p>
     </section>
 
     <section class="panel">
-      <div class="section-heading">
-        <h3>Créer un espace</h3>
-        <p>Un code public pour rejoindre, un PIN privé pour administrer.</p>
-      </div>
-
-      <form id="createSpaceForm" class="form-stack">
-        <div class="field">
-          <label for="spaceName">Nom de l’espace</label>
-          <input id="spaceName" type="text" placeholder="Ex: Networking Kigali" required />
+      <div id="adminMessageBox" class="message hidden"></div>
+      <form id="createSpaceForm" class="form">
+        <div class="grid-2">
+          <label>Nom du lieu
+            <input id="venueName" type="text" required />
+          </label>
+          <label>Ville
+            <input id="city" type="text" />
+          </label>
         </div>
-
-        <div class="field">
-          <label for="spaceDescription">Description</label>
-          <textarea id="spaceDescription" rows="4" placeholder="Ex: Session de networking professionnel"></textarea>
+        <div class="grid-2">
+          <label>Pays (code ISO)
+            <input id="countryCode" type="text" value="RW" required />
+          </label>
+          <label>Nom de l’événement
+            <input id="eventName" type="text" required />
+          </label>
         </div>
-
-        <div class="field two-cols">
-          <div>
-            <label for="adminPin">PIN admin</label>
-            <input id="adminPin" type="password" placeholder="Ex: 2468" required />
-          </div>
-          <div>
-            <label for="expiryHours">Durée de vie (heures)</label>
-            <input id="expiryHours" type="number" min="1" max="168" value="24" required />
-          </div>
+        <div class="grid-2">
+          <label>Latitude
+            <input id="latitude" type="number" step="0.000001" required />
+          </label>
+          <label>Longitude
+            <input id="longitude" type="number" step="0.000001" required />
+          </label>
         </div>
-
-        <div class="actions">
-          <button type="submit" class="btn btn-primary">Créer l’espace</button>
+        <div class="grid-2">
+          <label>Rayon en mètres
+            <input id="radiusMeters" type="number" value="100" required />
+          </label>
+          <label>PIN admin
+            <input id="adminPin" type="password" required />
+          </label>
         </div>
-      </form>
-
-      <div id="createdSpaceBox" class="info-box hidden"></div>
-    </section>
-
-    <section class="panel">
-      <div class="section-heading">
-        <h3>Ouvrir une session admin</h3>
-        <p>Chargez un espace existant avec le code public et le PIN admin.</p>
-      </div>
-
-      <form id="adminLoginForm" class="form-stack">
-        <div class="field two-cols">
-          <div>
-            <label for="loginSpaceCode">Code espace</label>
-            <input id="loginSpaceCode" type="text" placeholder="Ex: NC-4G7K9Q" required />
-          </div>
-          <div>
-            <label for="loginPin">PIN admin</label>
-            <input id="loginPin" type="password" placeholder="Entrer le PIN" required />
-          </div>
+        <div class="grid-2">
+          <label>Début
+            <input id="startsAt" type="datetime-local" required />
+          </label>
+          <label>Fin
+            <input id="endsAt" type="datetime-local" required />
+          </label>
         </div>
         <div class="actions">
-          <button type="submit" class="btn btn-primary">Ouvrir la session admin</button>
-          <button id="logoutAdminBtn" type="button" class="btn btn-ghost">Fermer la session</button>
+          <button class="btn btn-primary" type="submit">Créer l’espace</button>
         </div>
       </form>
     </section>
 
-    <section id="adminSpacePanel" class="panel hidden">
-      <div class="section-heading">
-        <h3>Espace administré</h3>
-        <p>Détails et QR code de diffusion</p>
-      </div>
-
-      <div class="admin-layout">
-        <div>
-          <div id="adminSpaceInfo" class="info-box"></div>
+    <section class="panel">
+      <h3>Actions admin</h3>
+      <form id="confirmPaymentForm" class="form">
+        <div class="grid-2">
+          <label>Référence paiement
+            <input id="paymentReference" type="text" />
+          </label>
+          <label>Référence fournisseur optionnelle
+            <input id="providerReference" type="text" />
+          </label>
         </div>
-        <div>
-          <div class="qr-card">
-            <h4>QR code d’accès</h4>
-            <div id="qrCanvasWrap" class="qr-wrap"></div>
-            <div id="publicJoinUrl" class="join-url"></div>
-          </div>
+        <div class="actions">
+          <button class="btn btn-success" type="submit">Confirmer paiement</button>
         </div>
-      </div>
+      </form>
+
+      <form id="closeSpaceForm" class="form" style="margin-top: 18px;">
+        <div class="grid-2">
+          <label>Code public
+            <input id="closePublicCode" type="text" />
+          </label>
+          <label>PIN admin
+            <input id="closeAdminPin" type="password" />
+          </label>
+        </div>
+        <div class="actions">
+          <button class="btn btn-danger" type="submit">Fermer l’espace</button>
+        </div>
+      </form>
+
+      <form id="purgeSpaceForm" class="form" style="margin-top: 18px;">
+        <label>Space ID à purger
+          <input id="purgeSpaceId" type="text" />
+        </label>
+        <div class="actions">
+          <button class="btn btn-danger" type="submit">Purger l’espace</button>
+        </div>
+      </form>
     </section>
 
-    <section id="adminProfilesPanel" class="panel hidden">
-      <div class="section-heading">
-        <h3>Profils enregistrés</h3>
-        <p>Surveillance et modération de l’espace</p>
-      </div>
-
-      <div id="adminProfilesMeta" class="subtle-meta"></div>
-      <div id="adminProfilesList" class="card-grid"></div>
-    </section>
-
-    <section id="adminActionsPanel" class="panel hidden">
-      <div class="section-heading">
-        <h3>Actions d’administration</h3>
-        <p>Clôture et maintenance de l’espace</p>
-      </div>
-
-      <div class="actions">
-        <button id="closeSpaceBtn" class="btn btn-danger">Fermer l’espace</button>
-      </div>
-    </section>
-
-    <section id="adminMessagePanel" class="panel hidden">
-      <div id="adminMessageBox" class="message-box"></div>
+    <section class="panel">
+      <h3>Résultat</h3>
+      <div id="adminResult" class="info-box"></div>
     </section>
   </main>
 
+  <footer class="footer">Admin Night Edition</footer>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+  <script src="env.js"></script>
   <script src="supabase.js"></script>
   <script src="utils.js"></script>
   <script src="admin.js"></script>
