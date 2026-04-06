@@ -3,129 +3,114 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NearConnect — Participant</title>
+  <title>NearConnect Night Edition</title>
   <link rel="stylesheet" href="style.css" />
 </head>
-<body class="theme-dark">
-  <div class="bg-orb orb-a"></div>
-  <div class="bg-orb orb-b"></div>
-
-  <header class="topbar">
-    <div class="container topbar-inner">
-      <a href="index.html" class="brand brand-link">
-        <div class="brand-mark">N</div>
+<body>
+  <header class="header">
+    <div class="container header-inner">
+      <div class="brand">
+        <div class="logo">N</div>
         <div>
-          <h1>NearConnect</h1>
-          <p>Connexion locale et networking de proximité</p>
+          <h1>NearConnect Night</h1>
+          <p>Bars, lounges, clubs, concerts</p>
         </div>
-      </a>
-
-      <nav class="top-actions">
-        <a href="admin.html" class="btn btn-ghost">Admin</a>
-        <button id="refreshBtn" class="btn btn-soft">Actualiser</button>
-      </nav>
+      </div>
+      <div class="nav">
+        <a class="btn btn-soft" href="admin.html">Admin</a>
+      </div>
     </div>
   </header>
 
-  <main class="container page-grid">
-    <section class="panel hero-panel">
-      <div class="hero-badge">Participant</div>
-      <h2>Rejoignez un espace et publiez votre présence.</h2>
-      <p>
-        Entrez le code de l’espace partagé par l’organisateur, ajoutez votre nom ou pseudonyme,
-        votre contact WhatsApp, votre disponibilité et laissez les autres vous contacter.
-      </p>
+  <main class="container page">
+    <section class="panel hero">
+      <span class="badge">Participant</span>
+      <h2>Mur social éphémère du lieu</h2>
+      <p>Crée ton profil, vois tous les autres participants, puis débloque tous les contacts WhatsApp avec un pass social unique. Les données disparaissent à la fin de l’événement.</p>
     </section>
 
     <section class="panel">
-      <div class="section-heading">
-        <h3>Rejoindre un espace</h3>
-        <p>Utilisez le code transmis par l’organisateur ou scanné via QR code.</p>
-      </div>
-
-      <form id="joinForm" class="form-stack">
-        <div class="field">
-          <label for="spaceCode">Code de l’espace</label>
-          <input id="spaceCode" type="text" placeholder="Ex: NC-4G7K9Q" required />
-        </div>
+      <div id="messageBox" class="message hidden"></div>
+      <form id="joinForm" class="form">
+        <label>Code public de l’espace
+          <input id="publicCode" type="text" placeholder="Ex: NC-4G7K9Q" required />
+        </label>
         <div class="actions">
-          <button type="submit" class="btn btn-primary">Rejoindre</button>
+          <button class="btn btn-primary" type="submit">Rejoindre l’espace</button>
         </div>
       </form>
     </section>
 
-    <section id="spacePanel" class="panel hidden">
-      <div class="section-heading">
-        <h3>Espace actif</h3>
-        <p>Informations de l’espace rejoint</p>
-      </div>
+    <section id="spaceSection" class="panel hidden">
+      <h3>Espace actif</h3>
       <div id="spaceInfo" class="info-box"></div>
     </section>
 
-    <section id="profilePanel" class="panel hidden">
-      <div class="section-heading">
-        <h3>Publier mon profil</h3>
-        <p>Les autres participants verront votre contact WhatsApp et votre disponibilité.</p>
-      </div>
-
-      <form id="profileForm" class="form-stack">
-        <div class="field">
-          <label for="displayName">Nom ou pseudonyme</label>
-          <input id="displayName" maxlength="50" type="text" placeholder="Ex: Hypolite" required />
-        </div>
-
-        <div class="field">
-          <label for="whatsappNumber">Numéro WhatsApp</label>
-          <input id="whatsappNumber" maxlength="20" type="text" placeholder="Ex: 2507XXXXXXXX" required />
-        </div>
-
-        <div class="field">
-          <label for="availability">Disponibilité</label>
-          <select id="availability" required>
-            <option value="">Sélectionner</option>
-            <option value="Disponible maintenant">Disponible maintenant</option>
-            <option value="Disponible plus tard">Disponible plus tard</option>
-            <option value="Disponible pour networking">Disponible pour networking</option>
-            <option value="Disponible pour collaboration">Disponible pour collaboration</option>
-            <option value="Occasionnellement disponible">Occasionnellement disponible</option>
-          </select>
-        </div>
-
-        <div class="field">
-          <label for="shortNote">Message court</label>
-          <textarea id="shortNote" rows="4" maxlength="160" placeholder="Ex: Data, innovation, partenariats"></textarea>
-        </div>
-
-        <div class="field checkbox-row">
-          <input id="consent" type="checkbox" required />
-          <label for="consent">
-            J’accepte d’afficher mes informations dans cet espace pendant sa durée de validité.
+    <section id="registerSection" class="panel hidden">
+      <h3>Publier mon profil</h3>
+      <form id="registerForm" class="form">
+        <div class="grid-2">
+          <label>Pseudo
+            <input id="displayName" type="text" maxlength="20" required />
+          </label>
+          <label>WhatsApp
+            <input id="whatsappNumber" type="text" required />
           </label>
         </div>
-
+        <div class="grid-2">
+          <label>Sexe
+            <select id="gender" required>
+              <option value="">Sélectionner</option>
+              <option value="M">M</option>
+              <option value="F">F</option>
+              <option value="X">X</option>
+            </select>
+          </label>
+          <label>Âge
+            <input id="age" type="number" min="18" max="99" required />
+          </label>
+        </div>
+        <div class="grid-2">
+          <label>Disponibilité
+            <select id="availability" required>
+              <option value="">Sélectionner</option>
+              <option value="Disponible">Disponible</option>
+              <option value="Ouvert à discuter">Ouvert à discuter</option>
+              <option value="Ouvert à danser">Ouvert à danser</option>
+              <option value="Ouvert à networking">Ouvert à networking</option>
+              <option value="Juste présent">Juste présent</option>
+              <option value="Pas disponible maintenant">Pas disponible maintenant</option>
+            </select>
+          </label>
+          <label>Photo optionnelle
+            <input id="photoFile" type="file" accept="image/*" />
+          </label>
+        </div>
         <div class="actions">
-          <button type="submit" class="btn btn-primary">Publier mon profil</button>
-          <button id="hideProfileBtn" type="button" class="btn btn-danger">Masquer mon profil</button>
+          <button class="btn btn-primary" type="submit">Publier mon profil</button>
         </div>
       </form>
     </section>
 
-    <section id="profilesPanel" class="panel hidden">
-      <div class="section-heading">
-        <h3>Participants visibles</h3>
-        <p>Contacts accessibles dans cet espace</p>
+    <section id="paymentSection" class="panel hidden">
+      <h3>Pass social</h3>
+      <div id="paymentPreview" class="info-box"></div>
+      <div class="actions" style="margin-top: 14px;">
+        <button id="startPaymentBtn" class="btn btn-success" type="button">Débloquer tous les contacts</button>
+        <button id="refreshProfilesBtn" class="btn btn-soft" type="button">Actualiser les profils</button>
       </div>
-
-      <div id="profilesMeta" class="subtle-meta"></div>
-      <div id="profilesList" class="card-grid"></div>
     </section>
 
-    <section id="messagePanel" class="panel hidden">
-      <div id="messageBox" class="message-box"></div>
+    <section id="profilesSection" class="panel hidden">
+      <h3>Participants visibles</h3>
+      <div id="profilesList" class="cards"></div>
     </section>
   </main>
 
+  <footer class="footer">NearConnect Night Edition — données supprimées à la fin de l’événement.</footer>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="env.js"></script>
   <script src="supabase.js"></script>
   <script src="utils.js"></script>
   <script src="participant.js"></script>
