@@ -1,296 +1,186 @@
-const pState = {
-  currentSpace: null,
-  myProfileId: localStorage.getItem("nc_profile_id") || null,
-  joinedSpaceCode: localStorage.getItem("nc_space_code") || null,
-};
+(async function () {
+  const messageBox = nc.qs('messageBox');
+  const joinForm = nc.qs('joinForm');
+  const registerForm = nc.qs('registerForm');
+  const startPaymentBtn = nc.qs('startPaymentBtn');
+  const refreshProfilesBtn = nc.qs('refreshProfilesBtn');
+  const profilesList = nc.qs('profilesList');
+  const publicCodeInput = nc.qs('publicCode');
+  const paymentPreview = nc.qs('paymentPreview');
 
-const pEl = {
-  joinForm: document.getElementById("joinForm"),
-  profileForm: document.getElementById("profileForm"),
-  refreshBtn: document.getElementById("refreshBtn"),
+  const codeFromQuery = nc.getQueryCode();
+  if (codeFromQuery) publicCodeInput.value = codeFromQuery;
 
-  spaceCode: document.getElementById("spaceCode"),
-  displayName: document.getElementById("displayName"),
-  whatsappNumber: document.getElementById("whatsappNumber"),
-  availability: document.getElementById("availability"),
-  shortNote: document.getElementById("shortNote"),
-  consent: document.getElementById("consent"),
-  hideProfileBtn: document.getElementById("hideProfileBtn"),
+  async function joinSpace() {
+    nc.hideMessage(messageBox);
+    try {
+      const location = await nc.getLocation();
+      const { data, error } = await nc.invoke('join-space', {
+        body: { public_code: publicCodeInput.value.trim().toUpperCase(), ...location },
+      });
+      if (error) throw error;
+      if (data.error) throw new Error(data.error);
 
-  spacePanel: document.getElementById("spacePanel"),
-  profilePanel: document.getElementById("profilePanel"),
-  profilesPanel: document.getElementById("profilesPanel"),
-  messagePanel: document.getElementById("messagePanel"),
+      nc.state.currentSpace = data.space;
+      nc.qs('spaceSection').classList.remove('hidden');
+      nc.qs('registerSection').classList.remove('hidden');
+      nc.qs('paymentSection').classList.remove('hidden');
+      nc.qs('profilesSection').classList.remove('hidden');
 
-  spaceInfo: document.getElementById("spaceInfo"),
-  profilesMeta: document.getElementById("profilesMeta"),
-  profilesList: document.getElementById("profilesList"),
-  messageBox: document.getElementById("messageBox"),
-};
-
-async function getPublicSpaceByCode(spaceCode) {
-  const nowIso = new Date().toISOString();
-
-  const { data, error } = await sb
-    .from("spaces_public")
-    .select("*")
-    .eq("space_code", spaceCode)
-    .eq("is_active", true)
-    .gt("expires_at", nowIso)
-    .single();
-
-  if (error) throw error;
-  return data;
-}
-
-async function upsertParticipantProfile(payload) {
-  if (pState.myProfileId) {
-    const { data, error } = await sb
-      .from("profiles")
-      .update({
-        display_name: payload.display_name,
-        whatsapp_number: payload.whatsapp_number,
-        availability: payload.availability,
-        short_note: payload.short_note,
-        is_visible: true,
-        expires_at: payload.expires_at,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", pState.myProfileId)
-      .eq("space_id", payload.space_id)
-      .select()
-      .single();
-
-    if (!error && data) return data;
+      nc.qs('spaceInfo').innerHTML = `
+        <strong>${data.space.venue_name}</strong><br>
+        ${data.space.event_name}<br>
+        Code: ${data.space.public_code}<br>
+        Rayon: ${data.space.radius_meters} m
+      `;
+      paymentPreview.innerHTML = `
+        Débloquez tous les contacts pour <strong>${data.payment_preview.local_amount} ${data.payment_preview.currency_code}</strong>.<br>
+        Taux utilisé: ${data.payment_preview.fx_rate_used}<br>
+        Dans le rayon: <strong>${data.access.in_radius ? 'Oui' : 'Non'}</strong>
+      `;
+      await loadProfiles();
+      nc.showMessage(messageBox, 'Espace rejoint avec succès.', 'success');
+    } catch (e) {
+      nc.showMessage(messageBox, e.message || 'Impossible de rejoindre l’espace.', 'error');
+    }
   }
 
-  const { data, error } = await sb
-    .from("profiles")
-    .insert([payload])
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data;
-}
-
-async function getVisibleProfiles(spaceId) {
-  const nowIso = new Date().toISOString();
-
-  const { data, error } = await sb
-    .from("profiles_public")
-    .select("*")
-    .eq("space_id", spaceId)
-    .eq("is_visible", true)
-    .gt("expires_at", nowIso)
-    .order("created_at", { ascending: false });
-
-  if (error) throw error;
-  return data || [];
-}
-
-async function hideMyProfileParticipant() {
-  if (!pState.myProfileId || !pState.currentSpace) {
-    showBox(pEl.messagePanel, pEl.messageBox, "Aucun profil local trouvé pour cet espace.", "error");
-    return;
+  async function fileToBase64(file) {
+    if (!file) return null;
+    const buffer = await file.arrayBuffer();
+    let binary = '';
+    const bytes = new Uint8Array(buffer);
+    const chunk = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunk) {
+      binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+    }
+    return btoa(binary);
   }
 
-  const { error } = await sb
-    .from("profiles")
-    .update({
-      is_visible: false,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", pState.myProfileId)
-    .eq("space_id", pState.currentSpace.id);
+  async function registerParticipant(e) {
+    e.preventDefault();
+    nc.hideMessage(messageBox);
+    try {
+      const location = await nc.getLocation();
+      const file = nc.qs('photoFile').files[0];
+      const photo_base64 = file ? await fileToBase64(file) : null;
 
-  if (error) throw error;
+      const { data, error } = await nc.invoke('register-participant', {
+        body: {
+          public_code: publicCodeInput.value.trim().toUpperCase(),
+          display_name: nc.qs('displayName').value.trim(),
+          gender: nc.qs('gender').value,
+          age: Number(nc.qs('age').value),
+          availability: nc.qs('availability').value,
+          whatsapp_number: nc.qs('whatsappNumber').value.trim(),
+          photo_base64,
+          photo_mime_type: file ? file.type : null,
+          ...location,
+        },
+      });
+      if (error) throw error;
+      if (data.error) throw new Error(data.error);
 
-  localStorage.removeItem("nc_profile_id");
-  pState.myProfileId = null;
-
-  showBox(pEl.messagePanel, pEl.messageBox, "Votre profil a été masqué.", "success");
-  await refreshParticipantProfiles();
-}
-
-function renderParticipantSpace(space) {
-  const visible = !!space;
-  pEl.spacePanel.classList.toggle("hidden", !visible);
-  pEl.profilePanel.classList.toggle("hidden", !visible);
-  pEl.profilesPanel.classList.toggle("hidden", !visible);
-
-  if (!visible) {
-    pEl.spaceInfo.innerHTML = "";
-    pEl.profilesMeta.innerHTML = "";
-    pEl.profilesList.innerHTML = "";
-    return;
+      localStorage.setItem('nc_participant_token', data.participant_session_token);
+      localStorage.setItem('nc_participant_id', data.participant.id);
+      nc.state.participantToken = data.participant_session_token;
+      nc.state.participantId = data.participant.id;
+      nc.showMessage(messageBox, 'Profil publié avec succès.', 'success');
+      await loadProfiles();
+    } catch (e2) {
+      nc.showMessage(messageBox, e2.message || 'Impossible de publier le profil.', 'error');
+    }
   }
 
-  pEl.spaceInfo.innerHTML = `
-    <h4>${escapeHtml(space.name)}</h4>
-    <p><strong>Code espace :</strong> <span class="code-pill">${escapeHtml(space.space_code)}</span></p>
-    <p><strong>Description :</strong> ${escapeHtml(space.description || "Aucune description")}</p>
-    <p><strong>Expire le :</strong> ${formatDate(space.expires_at)}</p>
-  `;
-}
+  async function startPayment() {
+    nc.hideMessage(messageBox);
+    try {
+      const token = nc.state.participantToken || localStorage.getItem('nc_participant_token');
+      if (!token) throw new Error('Inscris-toi d’abord.');
+      const location = await nc.getLocation();
+      const { data, error } = await nc.invoke('start-payment', {
+        headers: { Authorization: `Bearer ${token}` },
+        body: location,
+      });
+      if (error) throw error;
+      if (data.error) throw new Error(data.error);
 
-function renderParticipantProfiles(profiles) {
-  pEl.profilesMeta.innerHTML = `<strong>${profiles.length}</strong> profil(s) visible(s)`;
+      if (data.already_paid) {
+        nc.showMessage(messageBox, 'Paiement déjà actif pour cet espace.', 'success');
+        await loadProfiles();
+        return;
+      }
 
-  if (!profiles.length) {
-    pEl.profilesList.innerHTML = `
-      <div class="empty-box">
-        <p>Aucun profil visible pour le moment.</p>
-      </div>
-    `;
-    return;
+      localStorage.setItem('nc_payment_reference', data.payment.payment_reference);
+      nc.state.paymentReference = data.payment.payment_reference;
+      paymentPreview.innerHTML = `
+        <strong>${data.instructions.amount} ${data.instructions.currency_code}</strong><br>
+        Destinataire: <strong>${data.instructions.recipient_msisdn}</strong><br>
+        Référence: <strong>${data.instructions.payment_reference}</strong><br>
+        ${data.instructions.message}
+      `;
+      nc.showMessage(messageBox, 'Instructions de paiement générées. Demande à l’admin de confirmer après paiement.', 'info');
+    } catch (e) {
+      nc.showMessage(messageBox, e.message || 'Impossible de lancer le paiement.', 'error');
+    }
   }
 
-  pEl.profilesList.innerHTML = profiles.map(profile => {
-    const mine = pState.myProfileId && profile.id === pState.myProfileId;
-    return `
-      <article class="person-card">
-        <h4>${escapeHtml(profile.display_name)}</h4>
-        <div class="person-meta">
-          <span class="tag tag-green">${escapeHtml(profile.availability)}</span>
-          <span class="tag tag-gold">${formatDate(profile.created_at)}</span>
-        </div>
-        <div class="person-note">${escapeHtml(profile.short_note || "Aucun message")}</div>
-        <div class="person-actions">
-          <a class="action-link" href="${whatsappLink(profile.whatsapp_number)}" target="_blank" rel="noopener noreferrer">WhatsApp</a>
-          ${mine ? `<span class="action-muted">Votre profil</span>` : ``}
-        </div>
-      </article>
-    `;
-  }).join("");
-}
-
-async function refreshParticipantProfiles() {
-  if (!pState.currentSpace) return;
-  const profiles = await getVisibleProfiles(pState.currentSpace.id);
-  renderParticipantProfiles(profiles);
-}
-
-async function joinPublicSpace(code) {
-  hideBox(pEl.messagePanel, pEl.messageBox);
-
-  try {
-    const cleanCode = code.trim().toUpperCase();
-    const space = await getPublicSpaceByCode(cleanCode);
-
-    pState.currentSpace = space;
-    pState.joinedSpaceCode = space.space_code;
-    localStorage.setItem("nc_space_code", space.space_code);
-
-    renderParticipantSpace(space);
-    await refreshParticipantProfiles();
-
-    showBox(
-      pEl.messagePanel,
-      pEl.messageBox,
-      `Espace "${escapeHtml(space.name)}" rejoint avec succès.`,
-      "success"
-    );
-  } catch (error) {
-    console.error(error);
-    showBox(
-      pEl.messagePanel,
-      pEl.messageBox,
-      "Impossible de rejoindre cet espace. Vérifie le code ou son expiration.",
-      "error"
-    );
-  }
-}
-
-async function bootstrapParticipant() {
-  if (!pState.joinedSpaceCode) return;
-  try {
-    const space = await getPublicSpaceByCode(pState.joinedSpaceCode);
-    pState.currentSpace = space;
-    renderParticipantSpace(space);
-    await refreshParticipantProfiles();
-  } catch (error) {
-    localStorage.removeItem("nc_space_code");
-    localStorage.removeItem("nc_profile_id");
-    pState.joinedSpaceCode = null;
-    pState.myProfileId = null;
-  }
-}
-
-pEl.joinForm.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  await joinPublicSpace(pEl.spaceCode.value);
-});
-
-pEl.profileForm.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  hideBox(pEl.messagePanel, pEl.messageBox);
-
-  if (!pState.currentSpace) {
-    showBox(pEl.messagePanel, pEl.messageBox, "Rejoins d’abord un espace.", "error");
-    return;
-  }
-
-  const displayName = pEl.displayName.value.trim();
-  const whatsappNumber = pEl.whatsappNumber.value.trim();
-  const availability = pEl.availability.value;
-  const shortNote = pEl.shortNote.value.trim();
-  const consent = pEl.consent.checked;
-
-  if (!displayName || !whatsappNumber || !availability || !consent) {
-    showBox(pEl.messagePanel, pEl.messageBox, "Merci de compléter les champs obligatoires.", "error");
-    return;
-  }
-
-  try {
-    const saved = await upsertParticipantProfile({
-      space_id: pState.currentSpace.id,
-      display_name: displayName,
-      whatsapp_number: sanitizePhone(whatsappNumber),
-      availability,
-      short_note: shortNote,
-      is_visible: true,
-      expires_at: pState.currentSpace.expires_at,
-    });
-
-    pState.myProfileId = saved.id;
-    localStorage.setItem("nc_profile_id", saved.id);
-
-    pEl.profileForm.reset();
-    showBox(pEl.messagePanel, pEl.messageBox, "Votre profil a été publié.", "success");
-    await refreshParticipantProfiles();
-  } catch (error) {
-    console.error(error);
-    showBox(pEl.messagePanel, pEl.messageBox, "Erreur lors de l’enregistrement du profil.", "error");
-  }
-});
-
-pEl.hideProfileBtn.addEventListener("click", async () => {
-  try {
-    await hideMyProfileParticipant();
-  } catch (error) {
-    console.error(error);
-    showBox(pEl.messagePanel, pEl.messageBox, "Impossible de masquer le profil.", "error");
-  }
-});
-
-pEl.refreshBtn.addEventListener("click", async () => {
-  try {
-    if (!pState.currentSpace) {
-      showBox(pEl.messagePanel, pEl.messageBox, "Aucun espace actif à actualiser.", "info");
+  async function loadProfiles() {
+    const token = nc.state.participantToken || localStorage.getItem('nc_participant_token');
+    if (!token) {
+      const { data, error } = await sb.from('participants_public').select('*').eq('space_id', nc.state.currentSpace?.id || '').order('created_at', { ascending: false });
+      if (!error && data) renderProfiles(data.map((p) => ({ ...p, contact_locked: true, whatsapp_link: null })));
       return;
     }
 
-    const fresh = await getPublicSpaceByCode(pState.currentSpace.space_code);
-    pState.currentSpace = fresh;
-    renderParticipantSpace(fresh);
-    await refreshParticipantProfiles();
+    const { data, error } = await fetch(`${window.NEARCONNECT_FUNCTIONS_BASE}/get-unlocked-profiles`, {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${token}` },
+    }).then((r) => r.json().then((body) => ({ data: body, error: !r.ok })));
 
-    showBox(pEl.messagePanel, pEl.messageBox, "Données actualisées.", "success");
-  } catch (error) {
-    console.error(error);
-    showBox(pEl.messagePanel, pEl.messageBox, "Actualisation impossible.", "error");
+    if (error || data.error) {
+      nc.showMessage(messageBox, data?.error || 'Impossible de charger les profils.', 'error');
+      return;
+    }
+    renderProfiles(data.profiles);
   }
-});
 
-bootstrapParticipant();
+  function renderProfiles(profiles) {
+    profilesList.innerHTML = '';
+    if (!profiles.length) {
+      profilesList.innerHTML = '<div class="info-box">Aucun profil visible pour le moment.</div>';
+      return;
+    }
+
+    for (const p of profiles) {
+      const card = document.createElement('article');
+      card.className = 'card';
+      const photoUrl = p.photo_path ? nc.storagePublicUrl(p.photo_path) : '';
+      card.innerHTML = `
+        <div class="card-photo">${photoUrl ? `<img src="${photoUrl}" alt="${p.display_name}">` : '<span class="muted">Photo optionnelle</span>'}</div>
+        <div class="card-body">
+          <strong>${p.display_name}</strong>
+          <div class="meta">
+            <span class="tag purple">${p.gender}</span>
+            <span class="tag gold">${p.age} ans</span>
+            <span class="tag green">${p.availability}</span>
+          </div>
+          ${p.contact_locked ? '<button class="btn btn-soft" disabled>Contact verrouillé</button>' : `<a class="btn btn-success" href="${p.whatsapp_link}" target="_blank" rel="noopener">WhatsApp</a>`}
+        </div>
+      `;
+      profilesList.appendChild(card);
+    }
+  }
+
+  joinForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    await joinSpace();
+  });
+  registerForm.addEventListener('submit', registerParticipant);
+  startPaymentBtn.addEventListener('click', startPayment);
+  refreshProfilesBtn.addEventListener('click', loadProfiles);
+
+  if (codeFromQuery) {
+    try { await joinSpace(); } catch (_) {}
+  }
+})();
