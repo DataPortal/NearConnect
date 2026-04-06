@@ -3,113 +3,87 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NearConnect</title>
+  <title>NearConnect | Rejoindre un espace</title>
   <link rel="stylesheet" href="style.css" />
 </head>
-<body>
-  <div class="bg-orb orb-1"></div>
-  <div class="bg-orb orb-2"></div>
+<body class="app-shell">
+  <div class="bg-blur blur-a"></div>
+  <div class="bg-blur blur-b"></div>
 
-  <header class="app-header">
-    <div class="container header-inner">
-      <div class="brand">
-        <div class="brand-logo">N</div>
-        <div>
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <a href="index.html" class="brand-link">
+        <div class="brand-mark">N</div>
+        <div class="brand-copy">
           <h1>NearConnect</h1>
-          <p>Connecter les personnes présentes dans un même lieu</p>
+          <p>Connexion de proximité, simple et rapide</p>
         </div>
-      </div>
-      <button id="refreshBtn" class="btn btn-secondary">Actualiser</button>
+      </a>
+
+      <nav class="top-actions">
+        <a class="btn btn-ghost" href="admin.html">Espace admin</a>
+        <button id="refreshBtn" class="btn btn-soft" type="button">Actualiser</button>
+      </nav>
     </div>
   </header>
 
-  <main class="container main-grid">
-    <section class="card hero-card">
-      <div class="badge">MVP</div>
-      <h2>Créez un espace, partagez le code, connectez les gens.</h2>
+  <main class="container page-grid">
+    <section class="panel hero-panel">
+      <span class="eyebrow">NearConnect V2</span>
+      <h2>Entrez dans un espace partagé et laissez votre contact.</h2>
       <p>
-        NearConnect permet à des personnes présentes dans un même endroit de publier
-        un pseudo, un contact WhatsApp et leur disponibilité pour continuer les échanges en dehors de l’application.
+        Publiez votre nom ou pseudo, votre WhatsApp et votre disponibilité,
+        puis poursuivez la conversation en dehors de l’application.
       </p>
     </section>
 
-    <section class="card">
-      <div class="section-title">
-        <h3>Créer un espace</h3>
-        <p>Pour organisateur, hôte ou animateur</p>
+    <section class="panel">
+      <div class="section-head">
+        <div>
+          <h3>Rejoindre un espace</h3>
+          <p>Entrez le code fourni par l’organisateur</p>
+        </div>
       </div>
 
-      <form id="createSpaceForm" class="form-grid">
-        <div class="field">
-          <label for="spaceName">Nom de l’espace</label>
-          <input type="text" id="spaceName" placeholder="Ex: Networking Kigali" required />
-        </div>
-
-        <div class="field">
-          <label for="spaceDescription">Description</label>
-          <textarea id="spaceDescription" rows="3" placeholder="Ex: Rencontres professionnelles au coworking"></textarea>
-        </div>
-
-        <div class="field">
-          <label for="adminPin">Code admin</label>
-          <input type="password" id="adminPin" placeholder="Ex: 2468" required />
-        </div>
-
-        <div class="field">
-          <label for="spaceExpiryHours">Durée de vie (heures)</label>
-          <input type="number" id="spaceExpiryHours" min="1" max="168" value="24" required />
-        </div>
-
-        <div class="actions">
-          <button type="submit" class="btn btn-primary">Créer l’espace</button>
-        </div>
-      </form>
-
-      <div id="createdSpaceResult" class="result-box hidden"></div>
-    </section>
-
-    <section class="card">
-      <div class="section-title">
-        <h3>Rejoindre un espace</h3>
-        <p>Utilisez le code de l’espace partagé par l’organisateur</p>
-      </div>
-
-      <form id="joinSpaceForm" class="form-grid">
+      <form id="joinSpaceForm" class="form-stack">
         <div class="field">
           <label for="joinCode">Code espace</label>
-          <input type="text" id="joinCode" placeholder="Ex: NC-8F4K2Q" required />
+          <input id="joinCode" type="text" placeholder="Ex: NC-4H7K2P" required />
         </div>
-
-        <div class="actions">
-          <button type="submit" class="btn btn-primary">Rejoindre</button>
+        <div class="row-actions">
+          <button class="btn btn-primary" type="submit">Rejoindre</button>
         </div>
       </form>
     </section>
 
-    <section id="spaceInfoSection" class="card hidden">
-      <div class="section-title">
-        <h3>Espace actif</h3>
-        <p>Détails de l’espace rejoint</p>
+    <section id="spaceInfoSection" class="panel hidden">
+      <div class="section-head">
+        <div>
+          <h3>Espace actif</h3>
+          <p>Informations sur l’espace rejoint</p>
+        </div>
       </div>
 
-      <div id="spaceInfo" class="space-info"></div>
+      <div id="spaceInfo" class="info-card"></div>
     </section>
 
-    <section id="registerSection" class="card hidden">
-      <div class="section-title">
-        <h3>S’inscrire dans l’espace</h3>
-        <p>Publiez votre présence et votre contact WhatsApp</p>
+    <section id="registerSection" class="panel hidden">
+      <div class="section-head">
+        <div>
+          <h3>Publier mon profil</h3>
+          <p>Rendez votre présence visible pour les autres personnes du lieu</p>
+        </div>
       </div>
 
-      <form id="registerProfileForm" class="form-grid">
+      <form id="registerProfileForm" class="form-stack">
         <div class="field">
           <label for="displayName">Nom ou pseudonyme</label>
-          <input type="text" id="displayName" maxlength="50" placeholder="Ex: Hypolite" required />
+          <input id="displayName" type="text" maxlength="50" placeholder="Ex: Hypolite" required />
         </div>
 
         <div class="field">
           <label for="whatsappNumber">Numéro WhatsApp</label>
-          <input type="text" id="whatsappNumber" maxlength="20" placeholder="Ex: 2507XXXXXXXX" required />
+          <input id="whatsappNumber" type="text" maxlength="20" placeholder="Ex: +2507XXXXXXXX" required />
         </div>
 
         <div class="field">
@@ -125,61 +99,43 @@
         </div>
 
         <div class="field">
-          <label for="shortNote">Message court</label>
-          <textarea id="shortNote" rows="3" maxlength="140" placeholder="Ex: Intéressé par data, innovation, partenariats"></textarea>
+          <label for="interestTag">Centre d’intérêt / domaine</label>
+          <input id="interestTag" type="text" maxlength="60" placeholder="Ex: Data, entrepreneuriat, partenariat" />
         </div>
 
-        <div class="field checkbox-field">
-          <input type="checkbox" id="consent" required />
-          <label for="consent">
-            J’accepte d’afficher mon nom/pseudo, mon contact et ma disponibilité dans cet espace.
-          </label>
-        </div>
-
-        <div class="actions">
-          <button type="submit" class="btn btn-primary">Publier mon profil</button>
-          <button type="button" id="hideMyProfileBtn" class="btn btn-danger">Masquer mon profil</button>
-        </div>
-      </form>
-    </section>
-
-    <section id="profilesSection" class="card hidden">
-      <div class="section-title">
-        <h3>Personnes présentes</h3>
-        <p>Contacts visibles dans cet espace</p>
-      </div>
-
-      <div id="profilesMeta" class="profiles-meta"></div>
-      <div id="profilesList" class="profiles-grid"></div>
-    </section>
-
-    <section id="adminSection" class="card hidden">
-      <div class="section-title">
-        <h3>Administration de l’espace</h3>
-        <p>Fermer l’espace avec le code admin</p>
-      </div>
-
-      <form id="closeSpaceForm" class="form-grid">
         <div class="field">
-          <label for="closePin">Code admin</label>
-          <input type="password" id="closePin" placeholder="Entrer le code admin" required />
+          <label for="shortNote">Message court</label>
+          <textarea id="shortNote" rows="3" maxlength="160" placeholder="Ex: Disponible pour échanger sur les solutions data et innovation"></textarea>
         </div>
-        <div class="actions">
-          <button type="submit" class="btn btn-danger">Fermer cet espace</button>
+
+        <label class="check-line">
+          <input id="consent" type="checkbox" required />
+          <span>J’accepte d’afficher mes informations dans cet espace pendant sa durée de validité.</span>
+        </label>
+
+        <div class="row-actions">
+          <button class="btn btn-primary" type="submit">Publier mon profil</button>
+          <button id="hideMyProfileBtn" class="btn btn-danger" type="button">Masquer mon profil</button>
         </div>
       </form>
     </section>
 
-    <section id="messageSection" class="card message-card hidden">
+    <section id="profilesSection" class="panel hidden">
+      <div class="section-head">
+        <div>
+          <h3>Personnes présentes</h3>
+          <p>Contacts visibles dans cet espace</p>
+        </div>
+      </div>
+
+      <div id="profilesMeta" class="subtle-meta"></div>
+      <div id="profilesList" class="cards-grid"></div>
+    </section>
+
+    <section id="messageSection" class="panel hidden">
       <div id="messageBox"></div>
     </section>
   </main>
-
-  <footer class="app-footer">
-    <div class="container">
-      <p>NearConnect — MVP de mise en relation de proximité</p>
-    </div>
-  </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase.js"></script>
