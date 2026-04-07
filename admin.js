@@ -19,8 +19,7 @@
       headers: {
         'Content-Type': 'application/json',
         'x-admin-key': window.NEARCONNECT_ADMIN_MASTER_KEY,
-        'apikey': window.NEARCONNECT_SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${window.NEARCONNECT_SUPABASE_ANON_KEY}`,
+        'apikey': window.NEARCONNECT_SUPABASE_ANON_KEY
       },
       body: JSON.stringify(body),
     });
@@ -35,7 +34,7 @@
     } catch (_) {}
 
     if (!resp.ok) {
-      throw new Error(data?.error || rawText || `HTTP ${resp.status}`);
+      throw new Error(data?.error || data?.message || rawText || `HTTP ${resp.status}`);
     }
 
     return data;
