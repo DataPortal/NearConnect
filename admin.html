@@ -1,135 +1,30 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NearConnect Night Admin</title>
-  <link rel="stylesheet" href="style.css" />
-</head>
-<body>
-  <header class="header">
-    <div class="container header-inner">
-      <div class="brand">
-        <div class="logo">N</div>
-        <div>
-          <h1>NearConnect Night Admin</h1>
-          <p>Création et pilotage des espaces</p>
-        </div>
-      </div>
-      <div class="nav">
-        <a class="btn btn-soft" href="index.html">Participant</a>
-      </div>
-    </div>
-  </header>
+<!DOCTYPE html><html lang='fr'><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width,initial-scale=1.0'><title>NearConnect Admin</title><link rel='stylesheet' href='style.css'></head><body><header class='header'><div class='container header-inner'><div class='brand'><div class='logo'>N</div><div><h1>NearConnect Admin</h1><p>Gestion des espaces</p></div></div><div><a class='btn btn-soft' href='dashboard.html'>Dashboard</a></div></div></header><main class='container page'><section class='panel hero'><span class='badge'>Admin</span><h2>Validation, QR, désactivation et purge</h2><p>La géolocalisation du lieu est capturée automatiquement au moment de la création réelle de l'espace. Aucun champ latitude/longitude n'est visible.</p></section><section class='panel'><div id='adminMessageBox' class='message hidden'></div><h3>Approuver une demande et créer un espace</h3><form id='approveForm' class='form'><div class='grid-2'><label>Request ID<input id='requestId' required></label><label>PIN admin espace<input id='adminPin' type='password' required></label></div><div class='actions'><button class='btn btn-primary' type='submit'>Approuver et générer QR</button></div></form></section><section class='panel'><h3>Actions sur les espaces</h3><form id='closeSpaceForm' class='form'><div class='grid-2'><label>Code public<input id='closePublicCode'></label><label>PIN admin<input id='closeAdminPin' type='password'></label></div><div class='actions'><button class='btn btn-danger' type='submit'>Fermer l’espace</button></div></form><form id='purgeSpaceForm' class='form' style='margin-top:16px'><label>Space ID à purger<input id='purgeSpaceId'></label><div class='actions'><button class='btn btn-danger' type='submit'>Purger l’espace</button></div></form></section><section class='panel'><h3>Résultat</h3><div id='adminResult' class='info-box'></div></section></main><footer class='footer'>NearConnect Admin</footer><script src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'></script><script src='env.js'></script><script src='supabase.js'></script><script src='utils.js'></script><script>
+const box = nc.qs('adminMessageBox'); const result = nc.qs('adminResult');
+async function adminCall(name, body){ return await nc.adminCall(name, body); }
 
-  <main class="container page">
-    <section class="panel hero">
-      <span class="badge">Admin</span>
-      <h2>Créer, confirmer, fermer et purger un espace</h2>
-      <p>
-        Version temporaire sans géolocalisation navigateur.
-      </p>
-    </section>
+document.getElementById('approveForm').addEventListener('submit', async (e)=>{
+ e.preventDefault(); nc.hideMessage(box);
+ try {
+   const loc = await nc.getLocation();
+   const data = await adminCall('approve-space', { request_id: nc.qs('requestId').value.trim(), admin_pin: nc.qs('adminPin').value, latitude: loc.lat, longitude: loc.lng, radius_meters: 100 });
+   result.innerHTML = `<strong>Espace créé</strong><br>Code: ${data.space.public_code}<br>Space ID: ${data.space.id}<br>QR URL: ${data.qr_url}<br>Contact organisateur: ${data.request.contact_whatsapp}`;
+   nc.showMessage(box,'Demande approuvée et QR généré.','success');
+ } catch(err){ nc.showMessage(box, err.message || 'Erreur admin', 'error'); }
+});
 
-    <section class="panel">
-      <div id="adminMessageBox" class="message hidden"></div>
+document.getElementById('closeSpaceForm').addEventListener('submit', async (e)=>{
+ e.preventDefault(); nc.hideMessage(box);
+ try {
+   const data = await adminCall('close-space', { public_code: nc.qs('closePublicCode').value.trim().toUpperCase(), admin_pin: nc.qs('closeAdminPin').value });
+   result.innerHTML = `<strong>${data.message}</strong>`; nc.showMessage(box,'Espace fermé.','success');
+ } catch(err){ nc.showMessage(box, err.message || 'Erreur fermeture', 'error'); }
+});
 
-      <form id="createSpaceForm" class="form">
-        <div class="grid-2">
-          <label>Nom du lieu
-            <input id="venueName" type="text" required />
-          </label>
-          <label>Ville
-            <input id="city" type="text" />
-          </label>
-        </div>
-
-        <div class="grid-2">
-          <label>Pays (code ISO)
-            <input id="countryCode" type="text" value="RW" required />
-          </label>
-          <label>Nom de l’événement
-            <input id="eventName" type="text" required />
-          </label>
-        </div>
-
-        <div class="grid-2">
-          <label>Rayon en mètres
-            <input id="radiusMeters" type="number" value="100" required />
-          </label>
-          <label>PIN admin
-            <input id="adminPin" type="password" required />
-          </label>
-        </div>
-
-        <div class="grid-2">
-          <label>Début
-            <input id="startsAt" type="datetime-local" required />
-          </label>
-          <label>Fin
-            <input id="endsAt" type="datetime-local" required />
-          </label>
-        </div>
-
-        <div class="actions">
-          <button class="btn btn-primary" type="submit">Créer l’espace</button>
-        </div>
-      </form>
-    </section>
-
-    <section class="panel">
-      <h3>Actions admin</h3>
-
-      <form id="confirmPaymentForm" class="form">
-        <div class="grid-2">
-          <label>Référence paiement
-            <input id="paymentReference" type="text" />
-          </label>
-          <label>Référence fournisseur optionnelle
-            <input id="providerReference" type="text" />
-          </label>
-        </div>
-        <div class="actions">
-          <button class="btn btn-success" type="submit">Confirmer paiement</button>
-        </div>
-      </form>
-
-      <form id="closeSpaceForm" class="form" style="margin-top: 18px;">
-        <div class="grid-2">
-          <label>Code public
-            <input id="closePublicCode" type="text" />
-          </label>
-          <label>PIN admin
-            <input id="closeAdminPin" type="password" />
-          </label>
-        </div>
-        <div class="actions">
-          <button class="btn btn-danger" type="submit">Fermer l’espace</button>
-        </div>
-      </form>
-
-      <form id="purgeSpaceForm" class="form" style="margin-top: 18px;">
-        <label>Space ID à purger
-          <input id="purgeSpaceId" type="text" />
-        </label>
-        <div class="actions">
-          <button class="btn btn-danger" type="submit">Purger l’espace</button>
-        </div>
-      </form>
-    </section>
-
-    <section class="panel">
-      <h3>Résultat</h3>
-      <div id="adminResult" class="info-box"></div>
-    </section>
-  </main>
-
-  <footer class="footer">Admin Night Edition</footer>
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="env.js"></script>
-  <script src="supabase.js"></script>
-  <script src="utils.js"></script>
-  <script src="admin.js"></script>
-</body>
-</html>
+document.getElementById('purgeSpaceForm').addEventListener('submit', async (e)=>{
+ e.preventDefault(); nc.hideMessage(box);
+ try {
+   const data = await adminCall('purge-expired-space', { space_id: nc.qs('purgeSpaceId').value.trim() });
+   result.innerHTML = `<strong>Purge:</strong> ${data.purged}`; nc.showMessage(box,'Purge exécutée.','success');
+ } catch(err){ nc.showMessage(box, err.message || 'Erreur purge', 'error'); }
+});
+</script></body></html>
