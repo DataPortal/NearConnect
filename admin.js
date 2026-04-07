@@ -2,12 +2,6 @@
   const box = nc.qs('adminMessageBox');
   const result = nc.qs('adminResult');
 
-  function adminHeaders() {
-    return {
-      'x-admin-key': window.NEARCONNECT_ADMIN_MASTER_KEY,
-    };
-  }
-
   function localToIso(value) {
     return value ? new Date(value).toISOString() : '';
   }
@@ -17,6 +11,34 @@
       lat: -1.9441,
       lng: 30.0619,
     };
+  }
+
+  async function callFunction(name, body) {
+    const resp = await fetch(`${window.NEARCONNECT_FUNCTIONS_BASE}/${name}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-key': window.NEARCONNECT_ADMIN_MASTER_KEY,
+        'apikey': window.NEARCONNECT_SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${window.NEARCONNECT_SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify(body),
+    });
+
+    const rawText = await resp.text();
+    console.log(`${name.toUpperCase()} STATUS:`, resp.status);
+    console.log(`${name.toUpperCase()} RAW RESPONSE:`, rawText);
+
+    let data = {};
+    try {
+      data = JSON.parse(rawText);
+    } catch (_) {}
+
+    if (!resp.ok) {
+      throw new Error(data?.error || rawText || `HTTP ${resp.status}`);
+    }
+
+    return data;
   }
 
   nc.qs('createSpaceForm').addEventListener('submit', async (e) => {
@@ -43,22 +65,7 @@
       console.log('ADMIN KEY SENT:', window.NEARCONNECT_ADMIN_MASTER_KEY);
       console.log('CREATE SPACE BODY:', body);
 
-      const { data, error } = await nc.invoke('create-space', {
-        headers: adminHeaders(),
-        body,
-      });
-
-      console.log('CREATE SPACE RESPONSE:', { data, error });
-
-      if (error) {
-        console.error('Invoke error:', error);
-        throw new Error(error.message || 'Erreur Edge Function');
-      }
-
-      if (data?.error) {
-        console.error('Function error:', data);
-        throw new Error(data.error);
-      }
+      const data = await callFunction('create-space', body);
 
       result.innerHTML = `
         <strong>Espace créé</strong><br>
@@ -81,25 +88,12 @@
     nc.hideMessage(box);
 
     try {
-      const { data, error } = await nc.invoke('confirm-payment-manual', {
-        headers: adminHeaders(),
-        body: {
-          payment_reference: nc.qs('paymentReference').value.trim(),
-          provider_reference: nc.qs('providerReference').value.trim() || null,
-        },
+      const data = await callFunction('confirm-payment-manual', {
+        payment_reference: nc.qs('paymentReference').value.trim(),
+        provider_reference: nc.qs('providerReference').value.trim() || null,
       });
 
-      if (error) {
-        console.error('Invoke error:', error);
-        throw new Error(error.message || 'Erreur Edge Function');
-      }
-
-      if (data?.error) {
-        console.error('Function error:', data);
-        throw new Error(data.error);
-      }
-
-      result.innerHTML = '<strong>Paiement confirmé.</strong>';
+      result.innerHTML = `<strong>${data.message || 'Paiement confirmé.'}</strong>`;
       nc.showMessage(box, 'Paiement confirmé et déblocage activé.', 'success');
     } catch (err) {
       console.error('CONFIRM PAYMENT ERROR:', err);
@@ -112,25 +106,12 @@
     nc.hideMessage(box);
 
     try {
-      const { data, error } = await nc.invoke('close-space', {
-        headers: adminHeaders(),
-        body: {
-          public_code: nc.qs('closePublicCode').value.trim().toUpperCase(),
-          admin_pin: nc.qs('closeAdminPin').value,
-        },
+      const data = await callFunction('close-space', {
+        public_code: nc.qs('closePublicCode').value.trim().toUpperCase(),
+        admin_pin: nc.qs('closeAdminPin').value,
       });
 
-      if (error) {
-        console.error('Invoke error:', error);
-        throw new Error(error.message || 'Erreur Edge Function');
-      }
-
-      if (data?.error) {
-        console.error('Function error:', data);
-        throw new Error(data.error);
-      }
-
-      result.innerHTML = '<strong>Espace fermé.</strong>';
+      result.innerHTML = `<strong>${data.message || 'Espace fermé.'}</strong>`;
       nc.showMessage(box, 'Espace fermé.', 'success');
     } catch (err) {
       console.error('CLOSE SPACE ERROR:', err);
@@ -143,22 +124,9 @@
     nc.hideMessage(box);
 
     try {
-      const { data, error } = await nc.invoke('purge-expired-space', {
-        headers: adminHeaders(),
-        body: {
-          space_id: nc.qs('purgeSpaceId').value.trim(),
-        },
+      const data = await callFunction('purge-expired-space', {
+        space_id: nc.qs('purgeSpaceId').value.trim(),
       });
-
-      if (error) {
-        console.error('Invoke error:', error);
-        throw new Error(error.message || 'Erreur Edge Function');
-      }
-
-      if (data?.error) {
-        console.error('Function error:', data);
-        throw new Error(data.error);
-      }
 
       result.innerHTML = `<strong>Purge exécutée:</strong> ${data.purged}`;
       nc.showMessage(box, 'Purge exécutée.', 'success');
