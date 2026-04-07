@@ -10,12 +10,19 @@
     return value ? new Date(value).toISOString() : '';
   }
 
+  function getFallbackLocation() {
+    return {
+      lat: -1.9441,
+      lng: 30.0619,
+    };
+  }
+
   nc.qs('createSpaceForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     nc.hideMessage(box);
 
     try {
-      const location = await nc.getLocation();
+      const location = getFallbackLocation();
 
       const body = {
         venue_name: nc.qs('venueName').value.trim(),
