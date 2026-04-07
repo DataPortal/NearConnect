@@ -26,11 +26,15 @@
     <section class="panel hero">
       <span class="badge">Admin</span>
       <h2>Créer, confirmer, fermer et purger un espace</h2>
-      <p>Pour cette base GitHub, l’admin utilise un secret d’application transmis dans l’en-tête <code>x-admin-key</code>. En production, remplace cette logique par une authentification admin dédiée.</p>
+      <p>
+        La position du lieu est détectée automatiquement au moment de la création.
+        Elle n’est pas affichée dans l’interface.
+      </p>
     </section>
 
     <section class="panel">
       <div id="adminMessageBox" class="message hidden"></div>
+
       <form id="createSpaceForm" class="form">
         <div class="grid-2">
           <label>Nom du lieu
@@ -40,6 +44,7 @@
             <input id="city" type="text" />
           </label>
         </div>
+
         <div class="grid-2">
           <label>Pays (code ISO)
             <input id="countryCode" type="text" value="RW" required />
@@ -48,14 +53,7 @@
             <input id="eventName" type="text" required />
           </label>
         </div>
-        <div class="grid-2">
-          <label>Latitude
-            <input id="latitude" type="number" step="0.000001" required />
-          </label>
-          <label>Longitude
-            <input id="longitude" type="number" step="0.000001" required />
-          </label>
-        </div>
+
         <div class="grid-2">
           <label>Rayon en mètres
             <input id="radiusMeters" type="number" value="100" required />
@@ -64,6 +62,7 @@
             <input id="adminPin" type="password" required />
           </label>
         </div>
+
         <div class="grid-2">
           <label>Début
             <input id="startsAt" type="datetime-local" required />
@@ -72,6 +71,11 @@
             <input id="endsAt" type="datetime-local" required />
           </label>
         </div>
+
+        <div class="helper-box">
+          La présence du lieu sera capturée automatiquement via la géolocalisation du navigateur.
+        </div>
+
         <div class="actions">
           <button class="btn btn-primary" type="submit">Créer l’espace</button>
         </div>
@@ -80,6 +84,7 @@
 
     <section class="panel">
       <h3>Actions admin</h3>
+
       <form id="confirmPaymentForm" class="form">
         <div class="grid-2">
           <label>Référence paiement
