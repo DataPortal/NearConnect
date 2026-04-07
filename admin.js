@@ -3,7 +3,9 @@
   const result = nc.qs('adminResult');
 
   function adminHeaders() {
-    return { 'x-admin-key': window.NEARCONNECT_ADMIN_MASTER_KEY };
+    return {
+      'x-admin-key': window.NEARCONNECT_ADMIN_MASTER_KEY,
+    };
   }
 
   function localToIso(value) {
@@ -38,13 +40,25 @@
         created_by: 'github-admin',
       };
 
+      console.log('ADMIN KEY SENT:', window.NEARCONNECT_ADMIN_MASTER_KEY);
+      console.log('CREATE SPACE BODY:', body);
+
       const { data, error } = await nc.invoke('create-space', {
         headers: adminHeaders(),
         body,
       });
 
-      if (error) throw error;
-      if (data.error) throw new Error(data.error);
+      console.log('CREATE SPACE RESPONSE:', { data, error });
+
+      if (error) {
+        console.error('Invoke error:', error);
+        throw new Error(error.message || 'Erreur Edge Function');
+      }
+
+      if (data?.error) {
+        console.error('Function error:', data);
+        throw new Error(data.error);
+      }
 
       result.innerHTML = `
         <strong>Espace créé</strong><br>
@@ -57,6 +71,7 @@
 
       nc.showMessage(box, 'Espace créé avec succès.', 'success');
     } catch (err) {
+      console.error('CREATE SPACE FINAL ERROR:', err);
       nc.showMessage(box, err.message || 'Erreur de création.', 'error');
     }
   });
@@ -74,12 +89,20 @@
         },
       });
 
-      if (error) throw error;
-      if (data.error) throw new Error(data.error);
+      if (error) {
+        console.error('Invoke error:', error);
+        throw new Error(error.message || 'Erreur Edge Function');
+      }
+
+      if (data?.error) {
+        console.error('Function error:', data);
+        throw new Error(data.error);
+      }
 
       result.innerHTML = '<strong>Paiement confirmé.</strong>';
       nc.showMessage(box, 'Paiement confirmé et déblocage activé.', 'success');
     } catch (err) {
+      console.error('CONFIRM PAYMENT ERROR:', err);
       nc.showMessage(box, err.message || 'Erreur de confirmation.', 'error');
     }
   });
@@ -97,12 +120,20 @@
         },
       });
 
-      if (error) throw error;
-      if (data.error) throw new Error(data.error);
+      if (error) {
+        console.error('Invoke error:', error);
+        throw new Error(error.message || 'Erreur Edge Function');
+      }
+
+      if (data?.error) {
+        console.error('Function error:', data);
+        throw new Error(data.error);
+      }
 
       result.innerHTML = '<strong>Espace fermé.</strong>';
       nc.showMessage(box, 'Espace fermé.', 'success');
     } catch (err) {
+      console.error('CLOSE SPACE ERROR:', err);
       nc.showMessage(box, err.message || 'Erreur de fermeture.', 'error');
     }
   });
@@ -119,12 +150,20 @@
         },
       });
 
-      if (error) throw error;
-      if (data.error) throw new Error(data.error);
+      if (error) {
+        console.error('Invoke error:', error);
+        throw new Error(error.message || 'Erreur Edge Function');
+      }
+
+      if (data?.error) {
+        console.error('Function error:', data);
+        throw new Error(data.error);
+      }
 
       result.innerHTML = `<strong>Purge exécutée:</strong> ${data.purged}`;
       nc.showMessage(box, 'Purge exécutée.', 'success');
     } catch (err) {
+      console.error('PURGE ERROR:', err);
       nc.showMessage(box, err.message || 'Erreur de purge.', 'error');
     }
   });
