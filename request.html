@@ -76,61 +76,60 @@
   <script src="supabase.js"></script>
   <script src="utils.js"></script>
   <script>
-    const box = nc.qs('requestMessage');
+  const box = nc.qs('requestMessage');
 
-    async function publicFunctionCall(name, body) {
-      const resp = await fetch(`${window.NEARCONNECT_FUNCTIONS_BASE}/${name}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': window.NEARCONNECT_SUPABASE_ANON_KEY,
-          'Authorization': `Bearer ${window.NEARCONNECT_SUPABASE_ANON_KEY}`
-        },
-        body: JSON.stringify(body),
-      });
+  async function publicFunctionCall(name, body) {
+    const resp = await fetch(`${window.NEARCONNECT_FUNCTIONS_BASE}/${name}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body),
+    });
 
-      const rawText = await resp.text();
-      console.log(`${name.toUpperCase()} STATUS:`, resp.status);
-      console.log(`${name.toUpperCase()} RAW RESPONSE:`, rawText);
+    const rawText = await resp.text();
+    console.log(`${name.toUpperCase()} STATUS:`, resp.status);
+    console.log(`${name.toUpperCase()} RAW RESPONSE:`, rawText);
 
-      let data = {};
-      try { data = JSON.parse(rawText); } catch (_) {}
+    let data = {};
+    try { data = JSON.parse(rawText); } catch (_) {}
 
-      if (!resp.ok) {
-        throw new Error(data?.error || data?.message || rawText || `HTTP ${resp.status}`);
-      }
-      return data;
+    if (!resp.ok) {
+      throw new Error(data?.error || data?.message || rawText || `HTTP ${resp.status}`);
     }
 
-    document.getElementById('requestForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      nc.hideMessage(box);
+    return data;
+  }
 
-      try {
-        const startsAt = new Date(nc.qs('startsAt').value);
-        const endsAt = new Date(nc.qs('endsAt').value);
+  document.getElementById('requestForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    nc.hideMessage(box);
 
-        if (!(startsAt instanceof Date) || isNaN(startsAt)) throw new Error('Date de début invalide');
-        if (!(endsAt instanceof Date) || isNaN(endsAt)) throw new Error('Date de fin invalide');
-        if (endsAt <= startsAt) throw new Error('La fin doit être après le début');
+    try {
+      const startsAt = new Date(nc.qs('startsAt').value);
+      const endsAt = new Date(nc.qs('endsAt').value);
 
-        const data = await publicFunctionCall('create-space-request', {
-          country_code: nc.qs('countryCode').value.trim().toUpperCase(),
-          city: nc.qs('city').value.trim(),
-          venue_name: nc.qs('venueName').value.trim(),
-          event_name: nc.qs('eventName').value.trim(),
-          starts_at: startsAt.toISOString(),
-          ends_at: endsAt.toISOString(),
-          contact_whatsapp: nc.qs('contactWhatsApp').value.trim()
-        });
+      if (isNaN(startsAt.getTime())) throw new Error('Date de début invalide');
+      if (isNaN(endsAt.getTime())) throw new Error('Date de fin invalide');
+      if (endsAt <= startsAt) throw new Error('La fin doit être après le début');
 
-        nc.showMessage(box, `Demande enregistrée. Référence: ${data.request.reference}`, 'success');
-        e.target.reset();
-      } catch (err) {
-        console.error('CREATE SPACE REQUEST ERROR:', err);
-        nc.showMessage(box, err.message || 'Erreur de demande', 'error');
-      }
-    });
-  </script>
+      const data = await publicFunctionCall('create-space-request', {
+        country_code: nc.qs('countryCode').value.trim().toUpperCase(),
+        city: nc.qs('city').value.trim(),
+        venue_name: nc.qs('venueName').value.trim(),
+        event_name: nc.qs('eventName').value.trim(),
+        starts_at: startsAt.toISOString(),
+        ends_at: endsAt.toISOString(),
+        contact_whatsapp: nc.qs('contactWhatsApp').value.trim()
+      });
+
+      nc.showMessage(box, `Demande enregistrée. Référence: ${data.request.reference}`, 'success');
+      e.target.reset();
+    } catch (err) {
+      console.error('CREATE SPACE REQUEST ERROR:', err);
+      nc.showMessage(box, err.message || 'Erreur de demande', 'error');
+    }
+  });
+</script>
 </body>
 </html>
