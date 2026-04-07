@@ -1,19 +1,134 @@
-<!DOCTYPE html><html lang='fr'><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width,initial-scale=1.0'><title>NearConnect - Demande d'espace</title><link rel='stylesheet' href='style.css'></head><body><header class='header'><div class='container header-inner'><div class='brand'><div class='logo'>N</div><div><h1>NearConnect</h1><p>Demande d'ouverture d'espace</p></div></div><div><a class='btn btn-soft' href='admin.html'>Admin</a></div></div></header><main class='container page'><section class='panel hero'><span class='badge'>Organisateur</span><h2>Demande d'ouverture d'espace</h2><p>Renseigne le pays, la ville, le lieu, le nom de la soirée, sa durée et ton numéro WhatsApp. L'admin valide et t'envoie uniquement le QR code.</p></section><section class='panel'><div id='requestMessage' class='message hidden'></div><form id='requestForm' class='form'><div class='grid-2'><label>Pays<input id='countryCode' placeholder='Ex: RW, CD, KE, TG...' required></label><label>Ville<input id='city' required></label></div><div class='grid-2'><label>Lieu<input id='venueName' required></label><label>Nom de la soirée<input id='eventName' required></label></div><div class='grid-2'><label>Début<input id='startsAt' type='datetime-local' required></label><label>Fin<input id='endsAt' type='datetime-local' required></label></div><label>Numéro WhatsApp organisateur (avec indicatif pays)<input id='contactWhatsApp' placeholder='+2507...' required></label><div class='actions'><button class='btn btn-primary' type='submit'>Envoyer la demande</button></div></form></section></main><footer class='footer'>NearConnect Africa</footer><script src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'></script><script src='env.js'></script><script src='supabase.js'></script><script src='utils.js'></script><script>
-const box = nc.qs('requestMessage');
-document.getElementById('requestForm').addEventListener('submit', async (e)=>{
- e.preventDefault(); nc.hideMessage(box);
- try {
-   const data = await nc.adminCall('create-space-request', {
-      country_code: nc.qs('countryCode').value.trim().toUpperCase(),
-      city: nc.qs('city').value.trim(),
-      venue_name: nc.qs('venueName').value.trim(),
-      event_name: nc.qs('eventName').value.trim(),
-      starts_at: new Date(nc.qs('startsAt').value).toISOString(),
-      ends_at: new Date(nc.qs('endsAt').value).toISOString(),
-      contact_whatsapp: nc.qs('contactWhatsApp').value.trim()
-   });
-   nc.showMessage(box, `Demande enregistrée. Référence: ${data.request.reference}`, 'success');
-   e.target.reset();
- } catch(err){ nc.showMessage(box, err.message || 'Erreur de demande', 'error'); }
-});
-</script></body></html>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NearConnect - Demande d'espace</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="header">
+    <div class="container header-inner">
+      <div class="brand">
+        <div class="logo">N</div>
+        <div>
+          <h1>NearConnect</h1>
+          <p>Demande d'ouverture d'espace</p>
+        </div>
+      </div>
+      <div>
+        <a class="btn btn-soft" href="admin.html">Admin</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container page">
+    <section class="panel hero">
+      <span class="badge">Organisateur</span>
+      <h2>Demande d'ouverture d'espace</h2>
+      <p>
+        Renseigne le pays, la ville, le lieu, le nom de la soirée, sa durée et ton numéro WhatsApp.
+        L’admin valide ensuite l’ouverture et t’envoie uniquement le QR code.
+      </p>
+    </section>
+
+    <section class="panel">
+      <div id="requestMessage" class="message hidden"></div>
+
+      <form id="requestForm" class="form">
+        <div class="grid-2">
+          <label>Pays
+            <input id="countryCode" placeholder="Ex: RW, CD, KE, TG..." required />
+          </label>
+          <label>Ville
+            <input id="city" required />
+          </label>
+        </div>
+
+        <div class="grid-2">
+          <label>Lieu
+            <input id="venueName" required />
+          </label>
+          <label>Nom de la soirée
+            <input id="eventName" required />
+          </label>
+        </div>
+
+        <label>Durée de la soirée (heures)
+          <input id="durationHours" type="number" min="1" max="24" required />
+        </label>
+
+        <label>Numéro WhatsApp organisateur (avec indicatif pays)
+          <input id="contactWhatsApp" placeholder="+2507..." required />
+        </label>
+
+        <div class="actions">
+          <button class="btn btn-primary" type="submit">Envoyer la demande</button>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <footer class="footer">NearConnect Africa</footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="env.js"></script>
+  <script src="supabase.js"></script>
+  <script src="utils.js"></script>
+  <script>
+    const box = nc.qs('requestMessage');
+
+    async function publicFunctionCall(name, body) {
+      const resp = await fetch(`${window.NEARCONNECT_FUNCTIONS_BASE}/${name}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body),
+      });
+
+      const rawText = await resp.text();
+      console.log(`${name.toUpperCase()} STATUS:`, resp.status);
+      console.log(`${name.toUpperCase()} RAW RESPONSE:`, rawText);
+
+      let data = {};
+      try {
+        data = JSON.parse(rawText);
+      } catch (_) {}
+
+      if (!resp.ok) {
+        throw new Error(data?.error || data?.message || rawText || `HTTP ${resp.status}`);
+      }
+
+      return data;
+    }
+
+    document.getElementById('requestForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      nc.hideMessage(box);
+
+      try {
+        const data = await publicFunctionCall('create-space-request', {
+          country_code: nc.qs('countryCode').value.trim().toUpperCase(),
+          city: nc.qs('city').value.trim(),
+          venue_name: nc.qs('venueName').value.trim(),
+          event_name: nc.qs('eventName').value.trim(),
+          duration_hours: Number(nc.qs('durationHours').value),
+          whatsapp_number: nc.qs('contactWhatsApp').value.trim()
+        });
+
+        nc.showMessage(
+          box,
+          `Demande enregistrée avec succès.`,
+          'success'
+        );
+
+        e.target.reset();
+      } catch (err) {
+        console.error('CREATE SPACE REQUEST ERROR:', err);
+        nc.showMessage(box, err.message || 'Erreur de demande', 'error');
+      }
+    });
+  </script>
+</body>
+</html>
