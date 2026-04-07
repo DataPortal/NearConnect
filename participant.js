@@ -32,7 +32,7 @@
       });
 
       if (error) throw error;
-      if (data.error) throw new Error(data.error);
+      if (data?.error) throw new Error(data.error);
 
       nc.state.currentSpace = data.space;
       localStorage.setItem('nc_last_public_code', data.space.public_code);
@@ -56,6 +56,7 @@
       await loadProfiles();
       nc.showMessage(messageBox, 'Espace rejoint avec succès.', 'success');
     } catch (e) {
+      console.error('JOIN SPACE ERROR:', e);
       nc.showMessage(messageBox, e.message || 'Impossible de rejoindre l’espace.', 'error');
     }
   }
@@ -84,7 +85,7 @@
       });
 
       if (error) throw error;
-      if (data.error) throw new Error(data.error);
+      if (data?.error) throw new Error(data.error);
 
       localStorage.setItem('nc_participant_token', data.participant_session_token);
       localStorage.setItem('nc_participant_id', data.participant.id);
@@ -95,6 +96,7 @@
       nc.showMessage(messageBox, 'Profil publié avec succès.', 'success');
       await loadProfiles();
     } catch (e2) {
+      console.error('REGISTER PARTICIPANT ERROR:', e2);
       nc.showMessage(messageBox, e2.message || 'Impossible de publier le profil.', 'error');
     }
   }
@@ -108,15 +110,29 @@
 
       const location = getFallbackLocation();
 
-      const { data, error } = await nc.invoke('start-payment', {
+      const resp = await fetch(`${window.NEARCONNECT_FUNCTIONS_BASE}/start-payment`, {
+        method: 'POST',
         headers: {
-          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'apikey': window.NEARCONNECT_SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${window.NEARCONNECT_SUPABASE_ANON_KEY}`,
+          'x-participant-token': token,
         },
-        body: location,
+        body: JSON.stringify(location),
       });
 
-      if (error) throw error;
-      if (data.error) throw new Error(data.error);
+      const rawText = await resp.text();
+      console.log('START-PAYMENT STATUS:', resp.status);
+      console.log('START-PAYMENT RAW RESPONSE:', rawText);
+
+      let data = {};
+      try {
+        data = JSON.parse(rawText);
+      } catch (_) {}
+
+      if (!resp.ok) {
+        throw new Error(data?.error || data?.message || rawText || `HTTP ${resp.status}`);
+      }
 
       if (data.already_paid) {
         nc.showMessage(messageBox, 'Paiement déjà actif pour cet espace.', 'success');
@@ -136,6 +152,7 @@
 
       nc.showMessage(messageBox, 'Instructions de paiement générées. Confirme ensuite le paiement côté admin.', 'info');
     } catch (e) {
+      console.error('START PAYMENT ERROR:', e);
       nc.showMessage(messageBox, e.message || 'Impossible de lancer le paiement.', 'error');
     }
   }
@@ -146,9 +163,7 @@
     const token = nc.state.participantToken || localStorage.getItem('nc_participant_token');
 
     if (!nc.state.currentSpace && localStorage.getItem('nc_last_public_code')) {
-      try {
-        publicCodeInput.value = localStorage.getItem('nc_last_public_code') || '';
-      } catch (_) {}
+      publicCodeInput.value = localStorage.getItem('nc_last_public_code') || '';
     }
 
     if (!token) {
@@ -173,18 +188,27 @@
     const resp = await fetch(`${window.NEARCONNECT_FUNCTIONS_BASE}/get-unlocked-profiles`, {
       method: 'GET',
       headers: {
-        Authorization: `Bearer ${token}`,
+        'apikey': window.NEARCONNECT_SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${window.NEARCONNECT_SUPABASE_ANON_KEY}`,
+        'x-participant-token': token,
       },
     });
 
-    const data = await resp.json();
+    const rawText = await resp.text();
+    console.log('GET-UNLOCKED-PROFILES STATUS:', resp.status);
+    console.log('GET-UNLOCKED-PROFILES RAW RESPONSE:', rawText);
 
-    if (!resp.ok || data.error) {
-      nc.showMessage(messageBox, data?.error || 'Impossible de charger les profils.', 'error');
+    let data = {};
+    try {
+      data = JSON.parse(rawText);
+    } catch (_) {}
+
+    if (!resp.ok) {
+      nc.showMessage(messageBox, data?.error || data?.message || 'Impossible de charger les profils.', 'error');
       return;
     }
 
-    renderProfiles(data.profiles);
+    renderProfiles(data.profiles || []);
   }
 
   function renderProfiles(profiles) {
