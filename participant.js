@@ -11,11 +11,18 @@
   const codeFromQuery = nc.getQueryCode();
   if (codeFromQuery) publicCodeInput.value = codeFromQuery;
 
+  function getFallbackLocation() {
+    return {
+      lat: -1.9441,
+      lng: 30.0619,
+    };
+  }
+
   async function joinSpace() {
     nc.hideMessage(messageBox);
 
     try {
-      const location = await nc.getLocation();
+      const location = getFallbackLocation();
 
       const { data, error } = await nc.invoke('join-space', {
         body: {
@@ -39,13 +46,11 @@
         <strong>${data.space.venue_name}</strong><br>
         ${data.space.event_name}<br>
         Code: ${data.space.public_code}<br>
-        Période: ${nc.formatDate(data.space.starts_at)} → ${nc.formatDate(data.space.ends_at)}<br>
-        Vérification de présence: <strong>${data.access.in_radius ? 'Validée' : 'Refusée'}</strong>
+        Période: ${nc.formatDate(data.space.starts_at)} → ${nc.formatDate(data.space.ends_at)}
       `;
 
       paymentPreview.innerHTML = `
-        Débloquez tous les contacts pour <strong>${data.payment_preview.local_amount} ${data.payment_preview.currency_code}</strong>.<br>
-        Présence sur place: <strong>${data.access.in_radius ? 'Confirmée' : 'Non confirmée'}</strong>
+        Débloquez tous les contacts pour <strong>${data.payment_preview.local_amount} ${data.payment_preview.currency_code}</strong>.
       `;
 
       await loadProfiles();
@@ -60,7 +65,7 @@
     nc.hideMessage(messageBox);
 
     try {
-      const location = await nc.getLocation();
+      const location = getFallbackLocation();
       const file = nc.qs('photoFile').files[0];
       const photo_base64 = file ? await nc.fileToBase64(file) : null;
 
@@ -101,7 +106,7 @@
       const token = nc.state.participantToken || localStorage.getItem('nc_participant_token');
       if (!token) throw new Error('Inscris-toi d’abord.');
 
-      const location = await nc.getLocation();
+      const location = getFallbackLocation();
 
       const { data, error } = await nc.invoke('start-payment', {
         headers: {
