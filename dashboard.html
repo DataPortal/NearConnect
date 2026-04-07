@@ -1,0 +1,20 @@
+<!DOCTYPE html><html lang='fr'><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width,initial-scale=1.0'><title>NearConnect Dashboard</title><link rel='stylesheet' href='style.css'></head><body><header class='header'><div class='container header-inner'><div class='brand'><div class='logo'>N</div><div><h1>NearConnect Dashboard</h1><p>Statistiques agrégées</p></div></div><div><a class='btn btn-soft' href='admin.html'>Admin</a></div></div></header><main class='container page'><section class='panel hero'><span class='badge'>Analytics</span><h2>Pays, villes, espaces, paiements</h2><p>Les statistiques sont conservées même après purge des données personnelles et des photos.</p></section><section class='panel'><div id='dashMessage' class='message hidden'></div><div class='actions'><button id='loadStatsBtn' class='btn btn-primary' type='button'>Charger les statistiques</button></div></section><section class='panel'><div id='kpiWrap' class='kpi'></div></section><section class='panel'><h3>Résumé par pays</h3><div id='countryTable'></div></section><section class='panel'><h3>Résumé par ville</h3><div id='cityTable'></div></section><section class='panel'><h3>Résumé par espace</h3><div id='spaceTable'></div></section></main><footer class='footer'>NearConnect Dashboard</footer><script src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'></script><script src='env.js'></script><script src='supabase.js'></script><script src='utils.js'></script><script>
+const box = nc.qs('dashMessage');
+document.getElementById('loadStatsBtn').addEventListener('click', async ()=>{
+ nc.hideMessage(box);
+ try {
+   const data = await nc.adminCall('get-dashboard-stats', {});
+   const totals = data.totals || {};
+   nc.qs('kpiWrap').innerHTML = `
+     <div class='info-box'><strong>${totals.total_requests || 0}</strong>Demandes</div>
+     <div class='info-box'><strong>${totals.total_spaces || 0}</strong>Espaces</div>
+     <div class='info-box'><strong>${totals.total_profiles || 0}</strong>Profils</div>
+     <div class='info-box'><strong>${totals.total_paid || 0}</strong>Paiements</div>
+     <div class='info-box'><strong>${totals.total_revenue || 0}</strong>Revenu</div>`;
+   function renderTable(rows, cols){ if(!rows.length) return '<div class="info-box">Aucune donnée</div>'; return `<table><thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${cols.map(c=>`<td>${r[c] ?? ''}</td>`).join('')}</tr>`).join('')}</tbody></table>`; }
+   nc.qs('countryTable').innerHTML = renderTable(data.by_country || [], ['country_code','spaces','profiles','paid','revenue']);
+   nc.qs('cityTable').innerHTML = renderTable(data.by_city || [], ['country_code','city','spaces','profiles','paid','revenue']);
+   nc.qs('spaceTable').innerHTML = renderTable(data.by_space || [], ['country_code','city','venue_name','event_name','profiles','paid','revenue']);
+ } catch(err){ nc.showMessage(box, err.message || 'Erreur dashboard','error'); }
+});
+</script></body></html>
