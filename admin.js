@@ -19,7 +19,8 @@
       headers: {
         'Content-Type': 'application/json',
         'x-admin-key': window.NEARCONNECT_ADMIN_MASTER_KEY,
-        'apikey': window.NEARCONNECT_SUPABASE_ANON_KEY
+        'apikey': window.NEARCONNECT_SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${window.NEARCONNECT_SUPABASE_ANON_KEY}`
       },
       body: JSON.stringify(body),
     });
