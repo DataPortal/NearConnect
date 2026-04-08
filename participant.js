@@ -62,8 +62,8 @@
     nc.hideMessage(messageBox);
 
     try {
-      const tokenConsent = nc.qs('consent').checked;
-      if (!tokenConsent) throw new Error('Le consentement est obligatoire.');
+      const consent = nc.qs('consent').checked;
+      if (!consent) throw new Error('Le consentement est obligatoire.');
 
       const location = await nc.getLocation();
       const file = nc.qs('photoFile').files[0];
