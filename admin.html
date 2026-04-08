@@ -13,11 +13,11 @@
         <div class="logo">N</div>
         <div>
           <h1>NearConnect Admin</h1>
-          <p>Validation, activation, fermeture et purge</p>
+          <p>Super admin / admin régional</p>
         </div>
       </div>
       <div class="nav">
-        <a class="btn btn-soft" href="request.html">Demande</a>
+        <a class="btn btn-soft" href="organizer.html">Organizer</a>
         <a class="btn btn-soft" href="index.html">Client</a>
         <a class="btn btn-soft" href="dashboard.html">Dashboard</a>
       </div>
@@ -26,12 +26,9 @@
 
   <main class="container page">
     <section class="panel hero">
-      <span class="badge">Administration</span>
-      <h2>Validation des demandes et gestion des espaces</h2>
-      <p>
-        L’admin approuve une demande, définit la position réelle du lieu par géolocalisation automatique,
-        puis transmet le QR code au demandeur.
-      </p>
+      <span class="badge">Super Admin</span>
+      <h2>Créer des organisateurs, confirmer les paiements, fermer et purger</h2>
+      <p>Le super admin gère les accès organisateurs et les opérations globales.</p>
     </section>
 
     <section class="panel">
@@ -40,21 +37,29 @@
     </section>
 
     <section class="panel">
-      <h3>Approuver une demande</h3>
-      <form id="approveRequestForm" class="form">
+      <h3>Créer un organisateur autorisé</h3>
+      <form id="createOrganizerForm" class="form">
         <div class="grid-2">
-          <label>ID de la demande
-            <input id="approveRequestId" type="text" required />
+          <label>Nom complet
+            <input id="organizerFullName" required />
           </label>
-          <label>PIN admin de l’espace
-            <input id="approveAdminPin" type="password" value="2468" required />
+          <label>Organisation / Lieu
+            <input id="organizerOrgName" />
           </label>
         </div>
-        <div class="helper-box">
-          La position du lieu est capturée automatiquement au moment de l’approbation.
+        <div class="grid-2">
+          <label>Pays
+            <input id="organizerCountryCode" required />
+          </label>
+          <label>Ville
+            <input id="organizerCity" required />
+          </label>
         </div>
+        <label>WhatsApp
+          <input id="organizerWhatsApp" required />
+        </label>
         <div class="actions">
-          <button class="btn btn-primary" type="submit">Approuver et créer l’espace</button>
+          <button class="btn btn-primary" type="submit">Créer l’organisateur</button>
         </div>
       </form>
     </section>
@@ -94,13 +99,13 @@
     </section>
 
     <section class="panel">
-      <h3>Purger un espace expiré/fermé</h3>
+      <h3>Purger un espace</h3>
       <form id="purgeSpaceForm" class="form">
         <label>Space ID
           <input id="purgeSpaceId" type="text" required />
         </label>
         <div class="actions">
-          <button class="btn btn-danger" type="submit">Purger définitivement les données</button>
+          <button class="btn btn-danger" type="submit">Purger définitivement</button>
         </div>
       </form>
     </section>
