@@ -32,37 +32,31 @@
     return data;
   }
 
-  async function getLocation() {
-    return await nc.getLocation();
-  }
-
-  nc.qs('approveRequestForm').addEventListener('submit', async (e) => {
+  nc.qs('createOrganizerForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     nc.hideMessage(box);
 
     try {
-      const location = await getLocation();
-
-      const data = await callAdminFunction('approve-space', {
-        request_id: nc.qs('approveRequestId').value.trim(),
-        latitude: location.lat,
-        longitude: location.lng,
-        admin_pin: nc.qs('approveAdminPin').value,
+      const data = await callAdminFunction('create-organizer', {
+        full_name: nc.qs('organizerFullName').value.trim(),
+        organization_name: nc.qs('organizerOrgName').value.trim(),
+        country_code: nc.qs('organizerCountryCode').value.trim().toUpperCase(),
+        city: nc.qs('organizerCity').value.trim(),
+        whatsapp_number: nc.qs('organizerWhatsApp').value.trim(),
       });
 
       result.innerHTML = `
-        <strong>Demande approuvée</strong><br>
-        Référence demande: ${data.request.reference}<br>
-        Espace: ${data.space.event_name}<br>
-        Code public: <strong>${data.space.public_code}</strong><br>
-        Space ID: ${data.space.id}<br>
-        QR / Lien: <a href="${data.qr_url}" target="_blank" rel="noopener">${data.qr_url}</a>
+        <strong>Organisateur créé</strong><br>
+        Nom: ${data.organizer.full_name}<br>
+        Organisation: ${data.organizer.organization_name || '-'}<br>
+        Ville: ${data.organizer.city}<br>
+        Code d’accès: <strong>${data.organizer.access_code}</strong>
       `;
 
-      nc.showMessage(box, 'Demande approuvée et espace créé.', 'success');
+      nc.showMessage(box, 'Organisateur créé avec succès.', 'success');
     } catch (err) {
-      console.error('APPROVE REQUEST ERROR:', err);
-      nc.showMessage(box, err.message || 'Erreur d’approbation.', 'error');
+      console.error('CREATE ORGANIZER ERROR:', err);
+      nc.showMessage(box, err.message || 'Erreur de création organisateur.', 'error');
     }
   });
 
