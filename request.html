@@ -106,25 +106,12 @@
     nc.hideMessage(box);
 
     try {
-      const startsAt = new Date(nc.qs('startsAt').value);
-      const endsAt = new Date(nc.qs('endsAt').value);
-
-      if (isNaN(startsAt.getTime())) throw new Error('Date de début invalide');
-      if (isNaN(endsAt.getTime())) throw new Error('Date de fin invalide');
-      if (endsAt <= startsAt) throw new Error('La fin doit être après le début');
-
       const data = await publicFunctionCall('create-space-request', {
-        country_code: nc.qs('countryCode').value.trim().toUpperCase(),
-        city: nc.qs('city').value.trim(),
-        venue_name: nc.qs('venueName').value.trim(),
-        event_name: nc.qs('eventName').value.trim(),
-        starts_at: startsAt.toISOString(),
-        ends_at: endsAt.toISOString(),
-        contact_whatsapp: nc.qs('contactWhatsApp').value.trim()
+        test: true,
+        source: 'request.html'
       });
 
-      nc.showMessage(box, `Demande enregistrée. Référence: ${data.request.reference}`, 'success');
-      e.target.reset();
+      nc.showMessage(box, `Test OK: ${data.message}`, 'success');
     } catch (err) {
       console.error('CREATE SPACE REQUEST ERROR:', err);
       nc.showMessage(box, err.message || 'Erreur de demande', 'error');
