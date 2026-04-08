@@ -17,8 +17,8 @@
         </div>
       </div>
       <div class="nav">
-        <a class="btn btn-soft" href="request.html">Demande</a>
         <a class="btn btn-soft" href="admin.html">Admin</a>
+        <a class="btn btn-soft" href="organizer.html">Organizer</a>
         <a class="btn btn-soft" href="index.html">Client</a>
       </div>
     </div>
@@ -40,7 +40,7 @@
 
     <section class="panel">
       <h3>Résumé global</h3>
-      <div id="globalKpis" class="kpi">
+      <div class="kpi">
         <div class="info-box"><strong id="kpiSpaces">0</strong><span>Espaces</span></div>
         <div class="info-box"><strong id="kpiProfiles">0</strong><span>Profils</span></div>
         <div class="info-box"><strong id="kpiPaid">0</strong><span>Paiements confirmés</span></div>
@@ -50,8 +50,8 @@
 
     <section class="panel">
       <h3>Par pays / ville / espace</h3>
-      <div id="dashboardTableWrap" class="info-box" style="overflow:auto;">
-        <table id="dashboardTable" style="width:100%;border-collapse:collapse;">
+      <div class="info-box" style="overflow:auto;">
+        <table style="width:100%;border-collapse:collapse;">
           <thead>
             <tr>
               <th style="text-align:left;padding:10px;">Pays</th>
@@ -61,7 +61,7 @@
               <th style="text-align:right;padding:10px;">Profils</th>
               <th style="text-align:right;padding:10px;">Payés</th>
               <th style="text-align:right;padding:10px;">Revenu</th>
-              <th style="text-align:left;padding:10px;">Date agrégation</th>
+              <th style="text-align:left;padding:10px;">Date</th>
             </tr>
           </thead>
           <tbody id="dashboardTableBody">
@@ -105,23 +105,15 @@
           throw new Error(data?.error || data?.message || rawText || `HTTP ${resp.status}`);
         }
 
-        const rows = data.rows || [];
-        const totals = rows.reduce((acc, row) => {
-          acc.spaces += 1;
-          acc.profiles += Number(row.total_profiles || 0);
-          acc.paid += Number(row.total_paid || 0);
-          acc.revenue += Number(row.total_revenue || 0);
-          return acc;
-        }, { spaces: 0, profiles: 0, paid: 0, revenue: 0 });
-
-        document.getElementById('kpiSpaces').textContent = String(totals.spaces);
-        document.getElementById('kpiProfiles').textContent = String(totals.profiles);
-        document.getElementById('kpiPaid').textContent = String(totals.paid);
-        document.getElementById('kpiRevenue').textContent = totals.revenue.toFixed(2);
+        document.getElementById('kpiSpaces').textContent = String(data.summary.total_spaces || 0);
+        document.getElementById('kpiProfiles').textContent = String(data.summary.total_profiles || 0);
+        document.getElementById('kpiPaid').textContent = String(data.summary.total_paid || 0);
+        document.getElementById('kpiRevenue').textContent = Number(data.summary.total_revenue || 0).toFixed(2);
 
         const tbody = document.getElementById('dashboardTableBody');
         tbody.innerHTML = '';
 
+        const rows = data.rows || [];
         if (!rows.length) {
           tbody.innerHTML = '<tr><td colspan="8" style="padding:12px;">Aucune donnée disponible.</td></tr>';
           return;
