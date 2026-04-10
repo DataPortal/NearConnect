@@ -68,7 +68,7 @@
   }
 
   async function renderQrToCanvas(canvas, value) {
-    if (!value) return;
+    if (!value || !canvas) return;
     await QRCode.toCanvas(canvas, value, {
       width: 280,
       margin: 2,
@@ -103,6 +103,7 @@
   }
 
   function downloadCanvas(canvas, filename) {
+    if (!canvas) return;
     const link = document.createElement('a');
     link.download = filename;
     link.href = canvas.toDataURL('image/png');
@@ -233,24 +234,28 @@
     });
   }
 
-  downloadLatestQrBtn.addEventListener('click', () => {
-    if (!latestQrValue) {
-      nc.showMessage(box, 'Aucun QR disponible à télécharger.', 'error');
-      return;
-    }
-    downloadCanvas(latestQrCanvas, latestQrFileName);
-  });
+  if (downloadLatestQrBtn) {
+    downloadLatestQrBtn.addEventListener('click', () => {
+      if (!latestQrValue) {
+        nc.showMessage(box, 'Aucun QR disponible à télécharger.', 'error');
+        return;
+      }
+      downloadCanvas(latestQrCanvas, latestQrFileName);
+    });
+  }
 
-  copyLatestQrLinkBtn.addEventListener('click', async () => {
-    try {
-      if (!latestQrValue) throw new Error('Aucun lien client disponible.');
-      await navigator.clipboard.writeText(latestQrValue);
-      nc.showMessage(box, 'Lien client copié.', 'success');
-    } catch (err) {
-      console.error('COPY LATEST LINK ERROR:', err);
-      nc.showMessage(box, err.message || 'Impossible de copier le lien.', 'error');
-    }
-  });
+  if (copyLatestQrLinkBtn) {
+    copyLatestQrLinkBtn.addEventListener('click', async () => {
+      try {
+        if (!latestQrValue) throw new Error('Aucun lien client disponible.');
+        await navigator.clipboard.writeText(latestQrValue);
+        nc.showMessage(box, 'Lien client copié.', 'success');
+      } catch (err) {
+        console.error('COPY LATEST LINK ERROR:', err);
+        nc.showMessage(box, err.message || 'Impossible de copier le lien.', 'error');
+      }
+    });
+  }
 
   nc.qs('organizerLoginForm').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -258,6 +263,7 @@
 
     try {
       const accessCode = nc.qs('organizerAccessCode').value.trim().toUpperCase();
+      if (!accessCode) throw new Error('Le code d’accès organisateur est requis.');
 
       const resp = await fetch(`${window.NEARCONNECT_FUNCTIONS_BASE}/organizer-login`, {
         method: 'POST',
@@ -283,8 +289,66 @@
       }
 
       localStorage.setItem('nc_organizer_code', accessCode);
+      nc.state.organizerCode = accessCode;
+
       showOrganizerSections();
       await refreshOrganizerData();
 
       nc.showMessage(box, 'Connexion organisateur réussie.', 'success');
-    } catch
+    } catch (err) {
+      console.error('ORGANIZER LOGIN ERROR:', err);
+      nc.showMessage(box, err.message || 'Erreur de connexion.', 'error');
+    }
+  });
+
+  nc.qs('organizerCreateForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    nc.hideMessage(box);
+
+    try {
+      const location = await nc.getLocation();
+
+      const data = await callOrganizerFunction('create-organizer-space', 'POST', {
+        country_code: nc.qs('countryCode').value.trim().toUpperCase(),
+        city: nc.qs('city').value.trim(),
+        venue_name: nc.qs('venueName').value.trim(),
+        event_name: nc.qs('eventName').value.trim(),
+        starts_at: localToIso(nc.qs('startsAt').value),
+        ends_at: localToIso(nc.qs('endsAt').value),
+        latitude: location.lat,
+        longitude: location.lng,
+      });
+
+      result.innerHTML = `
+        <strong>Espace créé</strong><br>
+        Événement: ${data.space.event_name}<br>
+        Code public: <strong>${data.space.public_code}</strong><br>
+        Space ID: ${data.space.id}<br>
+        Lien client: <a href="${data.qr_url}" target="_blank" rel="noopener">${data.qr_url}</a>
+      `;
+
+      const enrichedSpace = {
+        ...data.space,
+        venue_name: data.venue?.name || '-',
+        total_profiles: 0,
+        total_paid: 0,
+        total_revenue: 0,
+      };
+
+      await setLatestQr(enrichedSpace);
+
+      nc.showMessage(box, 'Espace créé avec succès.', 'success');
+      await refreshOrganizerData();
+    } catch (err) {
+      console.error('CREATE ORGANIZER SPACE ERROR:', err);
+      nc.showMessage(box, err.message || 'Erreur de création.', 'error');
+    }
+  });
+
+  if (organizerCode()) {
+    showOrganizerSections();
+    refreshOrganizerData().catch((err) => {
+      console.error('AUTO REFRESH ORGANIZER ERROR:', err);
+    });
+  }
+})();
