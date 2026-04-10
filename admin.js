@@ -37,6 +37,8 @@
   }
 
   function renderLatestOrganizer(organizer) {
+    if (!latestOrganizerCard) return;
+
     latestOrganizerCard.innerHTML = `
       <strong>${organizer.full_name}</strong><br>
       Organisation: ${organizer.organization_name || '-'}<br>
@@ -64,6 +66,8 @@
   }
 
   function renderOrganizers(organizers) {
+    if (!organizersList) return;
+
     organizersList.innerHTML = '';
 
     if (!organizers || !organizers.length) {
@@ -136,13 +140,17 @@
     nc.hideMessage(box);
 
     try {
-      const data = await callAdminFunction('create-organizer', 'POST', {
+      const payload = {
         full_name: nc.qs('organizerFullName').value.trim(),
         organization_name: nc.qs('organizerOrgName').value.trim(),
         country_code: nc.qs('organizerCountryCode').value.trim().toUpperCase(),
         city: nc.qs('organizerCity').value.trim(),
         whatsapp_number: nc.qs('organizerWhatsApp').value.trim(),
-      });
+      };
+
+      console.log('CREATE-ORGANIZER BODY:', payload);
+
+      const data = await callAdminFunction('create-organizer', 'POST', payload);
 
       result.innerHTML = `
         <strong>Organisateur créé</strong><br>
@@ -162,10 +170,13 @@
     }
   });
 
-  nc.qs('refreshOrganizersBtn').addEventListener('click', async () => {
-    nc.hideMessage(box);
-    await loadOrganizers();
-  });
+  const refreshBtn = nc.qs('refreshOrganizersBtn');
+  if (refreshBtn) {
+    refreshBtn.addEventListener('click', async () => {
+      nc.hideMessage(box);
+      await loadOrganizers();
+    });
+  }
 
   nc.qs('confirmPaymentForm').addEventListener('submit', async (e) => {
     e.preventDefault();
