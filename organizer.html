@@ -27,8 +27,11 @@
   <main class="container page">
     <section class="panel hero">
       <span class="badge">Organizer Portal</span>
-      <h2>Créer et piloter tes espaces directement</h2>
-      <p>Connecte-toi avec ton code d’accès, crée un espace, récupère le QR code, vois tes espaces actifs, désactive-les et consulte tes stats.</p>
+      <h2>Créer, gérer et partager les QR codes de tes espaces</h2>
+      <p>
+        Connecte-toi avec ton code d’accès, crée un espace, récupère le QR code à partager avec tes clients,
+        désactive l’espace et consulte tes statistiques.
+      </p>
     </section>
 
     <section class="panel">
@@ -92,6 +95,22 @@
     <section id="organizerResultSection" class="panel hidden">
       <h3>Dernier espace créé</h3>
       <div id="organizerResult" class="info-box"></div>
+
+      <div id="latestQrSection" class="panel" style="margin-top:16px; background: rgba(255,255,255,.03);">
+        <h4 style="margin-top:0;">QR code du dernier espace</h4>
+        <div class="cards" style="grid-template-columns: 320px 1fr; align-items:start;">
+          <div class="info-box" style="display:grid; place-items:center;">
+            <canvas id="latestQrCanvas" width="280" height="280" style="background:white; border-radius:14px; padding:12px;"></canvas>
+          </div>
+          <div class="info-box">
+            <div id="latestQrMeta">Aucun QR généré.</div>
+            <div class="actions" style="margin-top:14px;">
+              <button id="downloadLatestQrBtn" class="btn btn-success" type="button">Télécharger le QR</button>
+              <button id="copyLatestQrLinkBtn" class="btn btn-soft" type="button">Copier le lien client</button>
+            </div>
+          </div>
+        </div>
+      </div>
     </section>
 
     <section id="organizerStatsSection" class="panel hidden">
@@ -105,7 +124,7 @@
     </section>
 
     <section id="organizerSpacesSection" class="panel hidden">
-      <h3>Mes espaces</h3>
+      <h3>Mes espaces et QR codes</h3>
       <div id="organizerSpacesList" class="cards"></div>
     </section>
   </main>
@@ -113,6 +132,7 @@
   <footer class="footer">NearConnect Africa — Organizer</footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
   <script src="env.js"></script>
   <script src="supabase.js"></script>
   <script src="utils.js"></script>
