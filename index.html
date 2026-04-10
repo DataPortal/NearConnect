@@ -101,9 +101,19 @@
 
     <section id="profilesSection" class="panel hidden">
       <h3>Profils visibles</h3>
-      <div id="profilesList" class="cards"></div>
+      <p class="muted">Clique sur une photo miniature pour l’agrandir.</p>
+      <div id="profilesList" class="cards cards-profiles"></div>
     </section>
   </main>
+
+  <div id="photoModal" class="photo-modal hidden">
+    <div class="photo-modal-backdrop" id="photoModalBackdrop"></div>
+    <div class="photo-modal-content">
+      <button id="photoModalClose" class="photo-modal-close" type="button">×</button>
+      <img id="photoModalImg" src="" alt="Photo profil" />
+      <div id="photoModalCaption" class="photo-modal-caption"></div>
+    </div>
+  </div>
 
   <footer class="footer">NearConnect Africa — données temporaires</footer>
 
