@@ -7,6 +7,7 @@
   const latestQrMeta = nc.qs('latestQrMeta');
   const downloadLatestQrBtn = nc.qs('downloadLatestQrBtn');
   const copyLatestQrLinkBtn = nc.qs('copyLatestQrLinkBtn');
+  const organizerCityStats = nc.qs('organizerCityStats');
 
   let latestQrValue = '';
   let latestQrFileName = 'nearconnect-qr.png';
@@ -60,6 +61,8 @@
     nc.qs('organizerCreateSection').classList.remove('hidden');
     nc.qs('organizerResultSection').classList.remove('hidden');
     nc.qs('organizerStatsSection').classList.remove('hidden');
+    nc.qs('organizerStatusSection').classList.remove('hidden');
+    nc.qs('organizerCitySection').classList.remove('hidden');
     nc.qs('organizerSpacesSection').classList.remove('hidden');
   }
 
@@ -69,6 +72,7 @@
 
   async function renderQrToCanvas(canvas, value) {
     if (!value || !canvas) return;
+
     await QRCode.toCanvas(canvas, value, {
       width: 280,
       margin: 2,
@@ -110,13 +114,36 @@
     link.click();
   }
 
+  function renderCityStats(byCity = []) {
+    organizerCityStats.innerHTML = '';
+
+    if (!byCity.length) {
+      organizerCityStats.innerHTML = '<div class="info-box">Aucune statistique par ville disponible.</div>';
+      return;
+    }
+
+    byCity.forEach((city) => {
+      const card = document.createElement('div');
+      card.className = 'info-box';
+      card.innerHTML = `
+        <strong>${city.city || '-'}</strong><br>
+        Espaces: ${city.total_spaces || 0}<br>
+        Profils: ${city.total_profiles || 0}<br>
+        Payés: ${city.total_paid || 0}<br>
+        Revenu: ${Number(city.total_revenue || 0).toFixed(2)}
+      `;
+      organizerCityStats.appendChild(card);
+    });
+  }
+
   async function refreshOrganizerData() {
-    const data = await callOrganizerFunction('list-organizer-spaces', 'GET');
+    const data = await callOrganizerFunction('get-organizer-stats', 'GET');
 
     identity.innerHTML = `
       <strong>${data.organizer.full_name}</strong><br>
       ${data.organizer.organization_name || '-'}<br>
-      ${data.organizer.city || '-'} — ${data.organizer.country_code || '-'}
+      ${data.organizer.city || '-'} — ${data.organizer.country_code || '-'}<br>
+      WhatsApp: ${data.organizer.whatsapp_number || '-'}
     `;
 
     nc.qs('orgTotalSpaces').textContent = String(data.summary?.total_spaces || 0);
@@ -124,6 +151,13 @@
     nc.qs('orgTotalPaid').textContent = String(data.summary?.total_paid || 0);
     nc.qs('orgTotalRevenue').textContent = Number(data.summary?.total_revenue || 0).toFixed(2);
 
+    nc.qs('orgActiveSpaces').textContent = String(data.summary?.active_spaces || 0);
+    nc.qs('orgDraftSpaces').textContent = String(data.summary?.draft_spaces || 0);
+    nc.qs('orgClosedSpaces').textContent = String(data.summary?.closed_spaces || 0);
+    nc.qs('orgExpiredSpaces').textContent = String(data.summary?.expired_spaces || 0);
+    nc.qs('orgPurgedSpaces').textContent = String(data.summary?.purged_spaces || 0);
+
+    renderCityStats(data.by_city || []);
     renderSpaces(data.spaces || []);
   }
 
