@@ -8,8 +8,38 @@
   const publicCodeInput = nc.qs('publicCode');
   const paymentPreview = nc.qs('paymentPreview');
 
+  const photoModal = nc.qs('photoModal');
+  const photoModalImg = nc.qs('photoModalImg');
+  const photoModalCaption = nc.qs('photoModalCaption');
+  const photoModalClose = nc.qs('photoModalClose');
+  const photoModalBackdrop = nc.qs('photoModalBackdrop');
+
   const codeFromQuery = nc.getQueryCode();
   if (codeFromQuery) publicCodeInput.value = codeFromQuery;
+
+  function openPhotoModal(src, caption = '') {
+    if (!src) return;
+    photoModalImg.src = src;
+    photoModalCaption.textContent = caption;
+    photoModal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closePhotoModal() {
+    photoModal.classList.add('hidden');
+    photoModalImg.src = '';
+    photoModalCaption.textContent = '';
+    document.body.style.overflow = '';
+  }
+
+  photoModalClose?.addEventListener('click', closePhotoModal);
+  photoModalBackdrop?.addEventListener('click', closePhotoModal);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !photoModal.classList.contains('hidden')) {
+      closePhotoModal();
+    }
+  });
 
   async function joinSpace() {
     nc.hideMessage(messageBox);
@@ -212,13 +242,18 @@
 
     for (const p of profiles) {
       const card = document.createElement('article');
-      card.className = 'card';
+      card.className = 'card profile-card';
 
       const photoUrl = p.photo_path ? nc.storagePublicUrl(p.photo_path) : '';
+      const hasPhoto = Boolean(photoUrl);
 
       card.innerHTML = `
-        <div class="card-photo">
-          ${photoUrl ? `<img src="${photoUrl}" alt="${p.display_name}">` : '<span class="muted">Photo optionnelle</span>'}
+        <div class="profile-thumb-wrap">
+          ${
+            hasPhoto
+              ? `<img class="profile-thumb clickable-photo" src="${photoUrl}" alt="${p.display_name}" data-photo="${photoUrl}" data-caption="${p.display_name} • ${p.gender} • ${p.age} ans">`
+              : `<div class="profile-thumb placeholder-thumb">Photo</div>`
+          }
         </div>
         <div class="card-body">
           <strong>${p.display_name}</strong>
@@ -236,6 +271,15 @@
 
       profilesList.appendChild(card);
     }
+
+    document.querySelectorAll('.clickable-photo').forEach((img) => {
+      img.addEventListener('click', () => {
+        openPhotoModal(
+          img.getAttribute('data-photo'),
+          img.getAttribute('data-caption') || ''
+        );
+      });
+    });
   }
 
   joinForm.addEventListener('submit', async (e) => {
