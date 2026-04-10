@@ -30,14 +30,20 @@
     } catch (_) {}
 
     if (!resp.ok) {
-      throw new Error(data?.error || data?.message || rawText || `HTTP ${resp.status}`);
+      throw new Error(
+        data?.error ||
+        data?.details ||
+        data?.message ||
+        rawText ||
+        `HTTP ${resp.status}`
+      );
     }
 
     return data;
   }
 
   function renderLatestOrganizer(organizer) {
-    if (!latestOrganizerCard) return;
+    if (!latestOrganizerCard || !organizer) return;
 
     latestOrganizerCard.innerHTML = `
       <strong>${organizer.full_name}</strong><br>
@@ -85,7 +91,9 @@
           <div class="meta">
             <span class="tag purple">${org.country_code}</span>
             <span class="tag gold">${org.city}</span>
-            <span class="tag ${org.is_active ? 'green' : 'purple'}">${org.is_active ? 'Actif' : 'Inactif'}</span>
+            <span class="tag ${org.is_active ? 'green' : 'purple'}">
+              ${org.is_active ? 'Actif' : 'Inactif'}
+            </span>
           </div>
           <div class="muted">
             Organisation: ${org.organization_name || '-'}<br>
@@ -120,55 +128,76 @@
       btn.addEventListener('click', () => {
         const accessCode = btn.getAttribute('data-fill-access');
         localStorage.setItem('nc_organizer_code', accessCode);
-        nc.showMessage(box, 'Code organisateur enregistré localement. Ouvre maintenant organizer.html.', 'success');
+        nc.showMessage(
+          box,
+          'Code organisateur enregistré localement. Ouvre maintenant organizer.html.',
+          'success'
+        );
       });
     });
   }
 
   async function loadOrganizers() {
+    if (!organizersList) return;
+
     try {
       const data = await callAdminFunction('list-organizers', 'GET');
       renderOrganizers(data.organizers || []);
     } catch (err) {
       console.error('LOAD ORGANIZERS ERROR:', err);
-      nc.showMessage(box, err.message || 'Erreur lors du chargement des organisateurs.', 'error');
+      nc.showMessage(
+        box,
+        err.message || 'Erreur lors du chargement des organisateurs.',
+        'error'
+      );
     }
   }
 
-  nc.qs('createOrganizerForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    nc.hideMessage(box);
+  const createOrganizerForm = nc.qs('createOrganizerForm');
+  if (createOrganizerForm) {
+    createOrganizerForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      nc.hideMessage(box);
 
-    try {
-      const payload = {
-        full_name: nc.qs('organizerFullName').value.trim(),
-        organization_name: nc.qs('organizerOrgName').value.trim(),
-        country_code: nc.qs('organizerCountryCode').value.trim().toUpperCase(),
-        city: nc.qs('organizerCity').value.trim(),
-        whatsapp_number: nc.qs('organizerWhatsApp').value.trim(),
-      };
+      try {
+        const payload = {
+          full_name: nc.qs('organizerFullName').value.trim(),
+          organization_name: nc.qs('organizerOrgName').value.trim(),
+          country_code: nc.qs('organizerCountryCode').value.trim().toUpperCase(),
+          city: nc.qs('organizerCity').value.trim(),
+          whatsapp_number: nc.qs('organizerWhatsApp').value.trim(),
+        };
 
-      console.log('CREATE-ORGANIZER BODY:', payload);
+        console.log('CREATE-ORGANIZER BODY:', payload);
+        console.log('ADMIN KEY SENT:', window.NEARCONNECT_ADMIN_MASTER_KEY);
 
-      const data = await callAdminFunction('create-organizer', 'POST', payload);
+        const data = await callAdminFunction('create-organizer', 'POST', payload);
 
-      result.innerHTML = `
-        <strong>Organisateur créé</strong><br>
-        Nom: ${data.organizer.full_name}<br>
-        Organisation: ${data.organizer.organization_name || '-'}<br>
-        Ville: ${data.organizer.city}<br>
-        Code d’accès: <strong>${data.organizer.access_code}</strong>
-      `;
+        if (result) {
+          result.innerHTML = `
+            <strong>Organisateur créé</strong><br>
+            Nom: ${data.organizer.full_name}<br>
+            Organisation: ${data.organizer.organization_name || '-'}<br>
+            Ville: ${data.organizer.city}<br>
+            Code d’accès: <strong>${data.organizer.access_code}</strong>
+          `;
+        }
 
-      renderLatestOrganizer(data.organizer);
-      await loadOrganizers();
+        renderLatestOrganizer(data.organizer);
+        await loadOrganizers();
 
-      nc.showMessage(box, 'Organisateur créé avec succès.', 'success');
-    } catch (err) {
-      console.error('CREATE ORGANIZER ERROR:', err);
-      nc.showMessage(box, err.message || 'Erreur de création organisateur.', 'error');
-    }
-  });
+        nc.showMessage(box, 'Organisateur créé avec succès.', 'success');
+        createOrganizerForm.reset();
+      } catch (err) {
+        console.error('CREATE ORGANIZER ERROR:', err);
+        nc.showMessage(
+          box,
+          err.message || 'Erreur de création organisateur.',
+          'error'
+        );
+      }
+    });
+  }
 
   const refreshBtn = nc.qs('refreshOrganizersBtn');
   if (refreshBtn) {
@@ -178,58 +207,91 @@
     });
   }
 
-  nc.qs('confirmPaymentForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    nc.hideMessage(box);
+  const confirmPaymentForm = nc.qs('confirmPaymentForm');
+  if (confirmPaymentForm) {
+    confirmPaymentForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      nc.hideMessage(box);
 
-    try {
-      const data = await callAdminFunction('confirm-payment-manual', 'POST', {
-        payment_reference: nc.qs('paymentReference').value.trim(),
-        provider_reference: nc.qs('providerReference').value.trim() || null,
-      });
+      try {
+        const data = await callAdminFunction('confirm-payment-manual', 'POST', {
+          payment_reference: nc.qs('paymentReference').value.trim(),
+          provider_reference: nc.qs('providerReference').value.trim() || null,
+        });
 
-      result.innerHTML = `<strong>${data.message || 'Paiement confirmé.'}</strong>`;
-      nc.showMessage(box, 'Paiement confirmé.', 'success');
-    } catch (err) {
-      console.error('CONFIRM PAYMENT ERROR:', err);
-      nc.showMessage(box, err.message || 'Erreur de confirmation.', 'error');
-    }
-  });
+        if (result) {
+          result.innerHTML = `<strong>${data.message || 'Paiement confirmé.'}</strong>`;
+        }
 
-  nc.qs('closeSpaceForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    nc.hideMessage(box);
+        nc.showMessage(box, 'Paiement confirmé.', 'success');
+        confirmPaymentForm.reset();
+      } catch (err) {
+        console.error('CONFIRM PAYMENT ERROR:', err);
+        nc.showMessage(
+          box,
+          err.message || 'Erreur de confirmation.',
+          'error'
+        );
+      }
+    });
+  }
 
-    try {
-      const data = await callAdminFunction('close-space', 'POST', {
-        public_code: nc.qs('closePublicCode').value.trim().toUpperCase(),
-        admin_pin: nc.qs('closeAdminPin').value,
-      });
+  const closeSpaceForm = nc.qs('closeSpaceForm');
+  if (closeSpaceForm) {
+    closeSpaceForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      nc.hideMessage(box);
 
-      result.innerHTML = `<strong>${data.message || 'Espace fermé.'}</strong>`;
-      nc.showMessage(box, 'Espace fermé.', 'success');
-    } catch (err) {
-      console.error('CLOSE SPACE ERROR:', err);
-      nc.showMessage(box, err.message || 'Erreur de fermeture.', 'error');
-    }
-  });
+      try {
+        const data = await callAdminFunction('close-space', 'POST', {
+          public_code: nc.qs('closePublicCode').value.trim().toUpperCase(),
+          admin_pin: nc.qs('closeAdminPin').value,
+        });
 
-  nc.qs('purgeSpaceForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    nc.hideMessage(box);
+        if (result) {
+          result.innerHTML = `<strong>${data.message || 'Espace fermé.'}</strong>`;
+        }
 
-    try {
-      const data = await callAdminFunction('purge-expired-space', 'POST', {
-        space_id: nc.qs('purgeSpaceId').value.trim(),
-      });
+        nc.showMessage(box, 'Espace fermé.', 'success');
+        closeSpaceForm.reset();
+      } catch (err) {
+        console.error('CLOSE SPACE ERROR:', err);
+        nc.showMessage(
+          box,
+          err.message || 'Erreur de fermeture.',
+          'error'
+        );
+      }
+    });
+  }
 
-      result.innerHTML = `<strong>Purge exécutée:</strong> ${data.purged}`;
-      nc.showMessage(box, 'Purge exécutée.', 'success');
-    } catch (err) {
-      console.error('PURGE ERROR:', err);
-      nc.showMessage(box, err.message || 'Erreur de purge.', 'error');
-    }
-  });
+  const purgeSpaceForm = nc.qs('purgeSpaceForm');
+  if (purgeSpaceForm) {
+    purgeSpaceForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      nc.hideMessage(box);
+
+      try {
+        const data = await callAdminFunction('purge-expired-space', 'POST', {
+          space_id: nc.qs('purgeSpaceId').value.trim(),
+        });
+
+        if (result) {
+          result.innerHTML = `<strong>Purge exécutée:</strong> ${data.purged}`;
+        }
+
+        nc.showMessage(box, 'Purge exécutée.', 'success');
+        purgeSpaceForm.reset();
+      } catch (err) {
+        console.error('PURGE ERROR:', err);
+        nc.showMessage(
+          box,
+          err.message || 'Erreur de purge.',
+          'error'
+        );
+      }
+    });
+  }
 
   loadOrganizers().catch((err) => {
     console.error('INITIAL LOAD ORGANIZERS ERROR:', err);
