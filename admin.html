@@ -13,7 +13,7 @@
         <div class="logo">N</div>
         <div>
           <h1>NearConnect Admin</h1>
-          <p>Super admin / admin régional</p>
+          <p>Super admin / administration régionale</p>
         </div>
       </div>
       <div class="nav">
@@ -27,8 +27,11 @@
   <main class="container page">
     <section class="panel hero">
       <span class="badge">Super Admin</span>
-      <h2>Créer des organisateurs, confirmer les paiements, fermer et purger</h2>
-      <p>Le super admin gère les accès organisateurs et les opérations globales.</p>
+      <h2>Créer des organisateurs et piloter la plateforme</h2>
+      <p>
+        Le super admin crée les organisateurs autorisés, suit les accès, confirme les paiements,
+        ferme les espaces et lance les purges.
+      </p>
     </section>
 
     <section class="panel">
@@ -50,7 +53,7 @@
 
         <div class="grid-2">
           <label>Pays
-            <input id="organizerCountryCode" required />
+            <input id="organizerCountryCode" placeholder="Ex: CD, RW, KE..." required />
           </label>
           <label>Ville
             <input id="organizerCity" required />
@@ -58,13 +61,28 @@
         </div>
 
         <label>WhatsApp
-          <input id="organizerWhatsApp" required />
+          <input id="organizerWhatsApp" placeholder="+243..." required />
         </label>
 
         <div class="actions">
           <button class="btn btn-primary" type="submit">Créer l’organisateur</button>
+          <button id="refreshOrganizersBtn" class="btn btn-soft" type="button">Actualiser la liste</button>
         </div>
       </form>
+    </section>
+
+    <section class="panel">
+      <h3>Dernier organisateur créé</h3>
+      <div id="latestOrganizerCard" class="info-box">
+        Aucun organisateur créé dans cette session.
+      </div>
+    </section>
+
+    <section class="panel">
+      <h3>Organisateurs autorisés</h3>
+      <div id="organizersList" class="cards">
+        <div class="info-box">Aucune donnée chargée.</div>
+      </div>
     </section>
 
     <section class="panel">
