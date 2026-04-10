@@ -1,206 +1,141 @@
-(function () {
-  const box = nc.qs('organizerMessage');
-  const identity = nc.qs('organizerIdentity');
-  const result = nc.qs('organizerResult');
-  const spacesList = nc.qs('organizerSpacesList');
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NearConnect Organizer</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="header">
+    <div class="container header-inner">
+      <div class="brand">
+        <div class="logo">N</div>
+        <div>
+          <h1>NearConnect Organizer</h1>
+          <p>Portail lieux et organisateurs autorisés</p>
+        </div>
+      </div>
+      <div class="nav">
+        <a class="btn btn-soft" href="admin.html">Admin</a>
+        <a class="btn btn-soft" href="index.html">Client</a>
+        <a class="btn btn-soft" href="dashboard.html">Dashboard</a>
+      </div>
+    </div>
+  </header>
 
-  function organizerCode() {
-    return localStorage.getItem('nc_organizer_code') || '';
-  }
+  <main class="container page">
+    <section class="panel hero">
+      <span class="badge">Organizer Portal</span>
+      <h2>Créer, gérer et partager les QR codes de tes espaces</h2>
+      <p>
+        Connecte-toi avec ton code d’accès, crée un espace, récupère le QR code à partager avec tes clients,
+        désactive l’espace et consulte tes statistiques.
+      </p>
+    </section>
 
-  function organizerHeaders() {
-    return {
-      'Content-Type': 'application/json',
-      'x-organizer-code': organizerCode(),
-      'apikey': window.NEARCONNECT_SUPABASE_ANON_KEY,
-      'Authorization': `Bearer ${window.NEARCONNECT_SUPABASE_ANON_KEY}`,
-    };
-  }
+    <section class="panel">
+      <div id="organizerMessage" class="message hidden"></div>
 
-  function organizerGetHeaders() {
-    return {
-      'x-organizer-code': organizerCode(),
-      'apikey': window.NEARCONNECT_SUPABASE_ANON_KEY,
-      'Authorization': `Bearer ${window.NEARCONNECT_SUPABASE_ANON_KEY}`,
-    };
-  }
+      <form id="organizerLoginForm" class="form">
+        <label>Code d’accès organisateur
+          <input id="organizerAccessCode" type="text" placeholder="Ex: ORG-AB12CD34" required />
+        </label>
+        <div class="actions">
+          <button class="btn btn-primary" type="submit">Se connecter</button>
+        </div>
+      </form>
+    </section>
 
-  async function callOrganizerFunction(name, method = 'POST', body = null) {
-    const resp = await fetch(`${window.NEARCONNECT_FUNCTIONS_BASE}/${name}`, {
-      method,
-      headers: method === 'GET' ? organizerGetHeaders() : organizerHeaders(),
-      body: method === 'GET' ? undefined : JSON.stringify(body),
-    });
+    <section id="organizerIdentitySection" class="panel hidden">
+      <h3>Organisateur connecté</h3>
+      <div id="organizerIdentity" class="info-box"></div>
+    </section>
 
-    const rawText = await resp.text();
-    console.log(`${name.toUpperCase()} STATUS:`, resp.status);
-    console.log(`${name.toUpperCase()} RAW RESPONSE:`, rawText);
+    <section id="organizerCreateSection" class="panel hidden">
+      <h3>Créer un espace</h3>
+      <form id="organizerCreateForm" class="form">
+        <div class="grid-2">
+          <label>Pays
+            <input id="countryCode" required />
+          </label>
+          <label>Ville
+            <input id="city" required />
+          </label>
+        </div>
 
-    let data = {};
-    try { data = JSON.parse(rawText); } catch (_) {}
+        <div class="grid-2">
+          <label>Lieu
+            <input id="venueName" required />
+          </label>
+          <label>Nom de la soirée
+            <input id="eventName" required />
+          </label>
+        </div>
 
-    if (!resp.ok) {
-      throw new Error(data?.error || data?.message || rawText || `HTTP ${resp.status}`);
-    }
+        <div class="grid-2">
+          <label>Début
+            <input id="startsAt" type="datetime-local" required />
+          </label>
+          <label>Fin
+            <input id="endsAt" type="datetime-local" required />
+          </label>
+        </div>
 
-    return data;
-  }
+        <div class="helper-box">
+          La position du lieu sera capturée automatiquement au moment de la création.
+        </div>
 
-  function showOrganizerSections() {
-    nc.qs('organizerIdentitySection').classList.remove('hidden');
-    nc.qs('organizerCreateSection').classList.remove('hidden');
-    nc.qs('organizerResultSection').classList.remove('hidden');
-    nc.qs('organizerStatsSection').classList.remove('hidden');
-    nc.qs('organizerSpacesSection').classList.remove('hidden');
-  }
+        <div class="actions">
+          <button class="btn btn-primary" type="submit">Créer l’espace</button>
+        </div>
+      </form>
+    </section>
 
-  function localToIso(value) {
-    return value ? new Date(value).toISOString() : '';
-  }
+    <section id="organizerResultSection" class="panel hidden">
+      <h3>Dernier espace créé</h3>
+      <div id="organizerResult" class="info-box"></div>
 
-  async function refreshOrganizerData() {
-    const stats = await callOrganizerFunction('get-organizer-stats', 'GET');
-    const spaces = await callOrganizerFunction('list-organizer-spaces', 'GET');
-
-    identity.innerHTML = `
-      <strong>${stats.organizer.full_name}</strong><br>
-      ${stats.organizer.organization_name || '-'}
-    `;
-
-    nc.qs('orgTotalSpaces').textContent = String(stats.summary.total_spaces || 0);
-    nc.qs('orgTotalProfiles').textContent = String(stats.summary.total_profiles || 0);
-    nc.qs('orgTotalPaid').textContent = String(stats.summary.total_paid || 0);
-    nc.qs('orgTotalRevenue').textContent = Number(stats.summary.total_revenue || 0).toFixed(2);
-
-    renderSpaces(spaces.spaces || []);
-  }
-
-  function renderSpaces(spaces) {
-    spacesList.innerHTML = '';
-
-    if (!spaces.length) {
-      spacesList.innerHTML = '<div class="info-box">Aucun espace créé pour le moment.</div>';
-      return;
-    }
-
-    spaces.forEach(space => {
-      const card = document.createElement('article');
-      card.className = 'card';
-
-      card.innerHTML = `
-        <div class="card-body">
-          <strong>${space.event_name}</strong>
-          <div class="meta">
-            <span class="tag purple">${space.country_code}</span>
-            <span class="tag gold">${space.city}</span>
-            <span class="tag green">${space.status}</span>
+      <div id="latestQrSection" class="panel" style="margin-top:16px; background: rgba(255,255,255,.03);">
+        <h4 style="margin-top:0;">QR code du dernier espace</h4>
+        <div class="cards" style="grid-template-columns: 320px 1fr; align-items:start;">
+          <div class="info-box" style="display:grid; place-items:center;">
+            <canvas id="latestQrCanvas" width="280" height="280" style="background:white; border-radius:14px; padding:12px;"></canvas>
           </div>
-          <div class="muted">
-            Code public: ${space.public_code}<br>
-            Début: ${nc.formatDate(space.starts_at)}<br>
-            Fin: ${nc.formatDate(space.ends_at)}<br>
-            ${space.qr_url ? `QR / Lien: <a href="${space.qr_url}" target="_blank" rel="noopener">${space.qr_url}</a>` : ''}
-          </div>
-          <div class="actions">
-            <button class="btn btn-danger" data-close-space="${space.id}">Désactiver</button>
+          <div class="info-box">
+            <div id="latestQrMeta">Aucun QR généré.</div>
+            <div class="actions" style="margin-top:14px;">
+              <button id="downloadLatestQrBtn" class="btn btn-success" type="button">Télécharger le QR</button>
+              <button id="copyLatestQrLinkBtn" class="btn btn-soft" type="button">Copier le lien client</button>
+            </div>
           </div>
         </div>
-      `;
+      </div>
+    </section>
 
-      spacesList.appendChild(card);
-    });
+    <section id="organizerStatsSection" class="panel hidden">
+      <h3>Résumé</h3>
+      <div class="kpi">
+        <div class="info-box"><strong id="orgTotalSpaces">0</strong><span>Espaces</span></div>
+        <div class="info-box"><strong id="orgTotalProfiles">0</strong><span>Profils</span></div>
+        <div class="info-box"><strong id="orgTotalPaid">0</strong><span>Payés</span></div>
+        <div class="info-box"><strong id="orgTotalRevenue">0</strong><span>Revenu</span></div>
+      </div>
+    </section>
 
-    document.querySelectorAll('[data-close-space]').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        try {
-          const spaceId = btn.getAttribute('data-close-space');
-          const data = await callOrganizerFunction('close-organizer-space', 'POST', { space_id: spaceId });
-          nc.showMessage(box, data.message || 'Espace désactivé.', 'success');
-          await refreshOrganizerData();
-        } catch (err) {
-          console.error('CLOSE ORGANIZER SPACE ERROR:', err);
-          nc.showMessage(box, err.message || 'Erreur de désactivation.', 'error');
-        }
-      });
-    });
-  }
+    <section id="organizerSpacesSection" class="panel hidden">
+      <h3>Mes espaces et QR codes</h3>
+      <div id="organizerSpacesList" class="cards"></div>
+    </section>
+  </main>
 
-  nc.qs('organizerLoginForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    nc.hideMessage(box);
+  <footer class="footer">NearConnect Africa — Organizer</footer>
 
-    try {
-      const accessCode = nc.qs('organizerAccessCode').value.trim().toUpperCase();
-
-      const resp = await fetch(`${window.NEARCONNECT_FUNCTIONS_BASE}/organizer-login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': window.NEARCONNECT_SUPABASE_ANON_KEY,
-          'Authorization': `Bearer ${window.NEARCONNECT_SUPABASE_ANON_KEY}`,
-        },
-        body: JSON.stringify({ access_code: accessCode }),
-      });
-
-      const rawText = await resp.text();
-      console.log('ORGANIZER-LOGIN STATUS:', resp.status);
-      console.log('ORGANIZER-LOGIN RAW RESPONSE:', rawText);
-
-      let data = {};
-      try { data = JSON.parse(rawText); } catch (_) {}
-
-      if (!resp.ok) {
-        throw new Error(data?.error || data?.message || rawText || `HTTP ${resp.status}`);
-      }
-
-      localStorage.setItem('nc_organizer_code', accessCode);
-
-      showOrganizerSections();
-      await refreshOrganizerData();
-
-      nc.showMessage(box, 'Connexion organisateur réussie.', 'success');
-    } catch (err) {
-      console.error('ORGANIZER LOGIN ERROR:', err);
-      nc.showMessage(box, err.message || 'Erreur de connexion.', 'error');
-    }
-  });
-
-  nc.qs('organizerCreateForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    nc.hideMessage(box);
-
-    try {
-      const location = await nc.getLocation();
-
-      const data = await callOrganizerFunction('create-organizer-space', 'POST', {
-        country_code: nc.qs('countryCode').value.trim().toUpperCase(),
-        city: nc.qs('city').value.trim(),
-        venue_name: nc.qs('venueName').value.trim(),
-        event_name: nc.qs('eventName').value.trim(),
-        starts_at: localToIso(nc.qs('startsAt').value),
-        ends_at: localToIso(nc.qs('endsAt').value),
-        latitude: location.lat,
-        longitude: location.lng,
-      });
-
-      result.innerHTML = `
-        <strong>Espace créé</strong><br>
-        Événement: ${data.space.event_name}<br>
-        Code public: <strong>${data.space.public_code}</strong><br>
-        Space ID: ${data.space.id}<br>
-        QR / Lien: <a href="${data.qr_url}" target="_blank" rel="noopener">${data.qr_url}</a>
-      `;
-
-      nc.showMessage(box, 'Espace créé avec succès.', 'success');
-      await refreshOrganizerData();
-    } catch (err) {
-      console.error('CREATE ORGANIZER SPACE ERROR:', err);
-      nc.showMessage(box, err.message || 'Erreur de création.', 'error');
-    }
-  });
-
-  if (organizerCode()) {
-    showOrganizerSections();
-    refreshOrganizerData().catch(() => {});
-  }
-})();
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+  <script src="env.js"></script>
+  <script src="supabase.js"></script>
+  <script src="utils.js"></script>
+  <script src="organizer.js"></script>
+</body>
+</html>
