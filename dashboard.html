@@ -13,22 +13,20 @@
         <div class="logo">N</div>
         <div>
           <h1>NearConnect Dashboard</h1>
-          <p>Statistiques pays, villes, espaces</p>
+          <p>Vue globale administrateur</p>
         </div>
       </div>
       <div class="nav">
         <a class="btn btn-soft" href="admin.html">Admin</a>
-        <a class="btn btn-soft" href="organizer.html">Organizer</a>
-        <a class="btn btn-soft" href="index.html">Client</a>
       </div>
     </div>
   </header>
 
   <main class="container page">
     <section class="panel hero">
-      <span class="badge">Analytics</span>
-      <h2>Vue consolidée NearConnect</h2>
-      <p>Suivi des espaces, profils, paiements confirmés et revenus agrégés.</p>
+      <span class="badge">Global View</span>
+      <h2>Suivi consolidé NearConnect</h2>
+      <p>Vue globale des espaces, profils, paiements et revenus.</p>
     </section>
 
     <section class="panel">
@@ -72,7 +70,7 @@
     </section>
   </main>
 
-  <footer class="footer">NearConnect Africa — Dashboard</footer>
+  <footer class="footer">NearConnect Africa — Vue globale</footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="env.js"></script>
@@ -88,8 +86,8 @@
         const resp = await fetch(`${window.NEARCONNECT_FUNCTIONS_BASE}/get-dashboard-stats`, {
           method: 'GET',
           headers: {
-            'apikey': window.NEARCONNECT_SUPABASE_ANON_KEY,
-            'Authorization': `Bearer ${window.NEARCONNECT_SUPABASE_ANON_KEY}`,
+            apikey: window.NEARCONNECT_SUPABASE_ANON_KEY,
+            Authorization: `Bearer ${window.NEARCONNECT_SUPABASE_ANON_KEY}`,
             'x-admin-key': window.NEARCONNECT_ADMIN_MASTER_KEY
           }
         });
