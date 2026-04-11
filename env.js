@@ -1,4 +1,4 @@
 window.NEARCONNECT_SUPABASE_URL = 'https://vtezfkktbrtdnxeayjjm.supabase.co';
-window.NEARCONNECT_SUPABASE_ANON_KEY = 'TA_VRAIE_ANON_KEY';
+window.NEARCONNECT_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ0ZXpma2t0YnJ0ZG54ZWF5amptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0NTc1NjUsImV4cCI6MjA5MTAzMzU2NX0.3meppPrHmKh9c2rWzfzCGjWi0dXQ34IHbdrDohyHSxo';
 window.NEARCONNECT_FUNCTIONS_BASE = 'https://vtezfkktbrtdnxeayjjm.supabase.co/functions/v1';
 window.NEARCONNECT_ADMIN_MASTER_KEY = 'NearConnect@2026';
