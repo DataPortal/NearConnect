@@ -17,9 +17,7 @@
         </div>
       </div>
       <div class="nav">
-        <a class="btn btn-soft" href="admin.html">Admin</a>
-        <a class="btn btn-soft" href="index.html">Client</a>
-        <a class="btn btn-soft" href="dashboard.html">Dashboard</a>
+        <span class="badge">Accès organisateur</span>
       </div>
     </div>
   </header>
@@ -101,12 +99,7 @@
         <h4 style="margin-top:0;">QR code du dernier espace</h4>
         <div class="cards" style="grid-template-columns: 320px 1fr; align-items:start;">
           <div class="info-box" style="display:grid; place-items:center;">
-            <canvas
-              id="latestQrCanvas"
-              width="280"
-              height="280"
-              style="background:white; border-radius:14px; padding:12px;"
-            ></canvas>
+            <canvas id="latestQrCanvas" width="280" height="280" style="background:white; border-radius:14px; padding:12px;"></canvas>
           </div>
           <div class="info-box">
             <div id="latestQrMeta">Aucun QR généré.</div>
@@ -122,48 +115,21 @@
     <section id="organizerStatsSection" class="panel hidden">
       <h3>Résumé global</h3>
       <div class="kpi">
-        <div class="info-box">
-          <strong id="orgTotalSpaces">0</strong>
-          <span>Espaces</span>
-        </div>
-        <div class="info-box">
-          <strong id="orgTotalProfiles">0</strong>
-          <span>Profils</span>
-        </div>
-        <div class="info-box">
-          <strong id="orgTotalPaid">0</strong>
-          <span>Payés</span>
-        </div>
-        <div class="info-box">
-          <strong id="orgTotalRevenue">0</strong>
-          <span>Revenu</span>
-        </div>
+        <div class="info-box"><strong id="orgTotalSpaces">0</strong><span>Espaces</span></div>
+        <div class="info-box"><strong id="orgTotalProfiles">0</strong><span>Profils</span></div>
+        <div class="info-box"><strong id="orgTotalPaid">0</strong><span>Payés</span></div>
+        <div class="info-box"><strong id="orgTotalRevenue">0</strong><span>Revenu</span></div>
       </div>
     </section>
 
     <section id="organizerStatusSection" class="panel hidden">
       <h3>Répartition des espaces</h3>
       <div class="kpi">
-        <div class="info-box">
-          <strong id="orgActiveSpaces">0</strong>
-          <span>Actifs</span>
-        </div>
-        <div class="info-box">
-          <strong id="orgDraftSpaces">0</strong>
-          <span>Brouillons</span>
-        </div>
-        <div class="info-box">
-          <strong id="orgClosedSpaces">0</strong>
-          <span>Fermés</span>
-        </div>
-        <div class="info-box">
-          <strong id="orgExpiredSpaces">0</strong>
-          <span>Expirés</span>
-        </div>
-        <div class="info-box">
-          <strong id="orgPurgedSpaces">0</strong>
-          <span>Purgés</span>
-        </div>
+        <div class="info-box"><strong id="orgActiveSpaces">0</strong><span>Actifs</span></div>
+        <div class="info-box"><strong id="orgDraftSpaces">0</strong><span>Brouillons</span></div>
+        <div class="info-box"><strong id="orgClosedSpaces">0</strong><span>Fermés</span></div>
+        <div class="info-box"><strong id="orgExpiredSpaces">0</strong><span>Expirés</span></div>
+        <div class="info-box"><strong id="orgPurgedSpaces">0</strong><span>Purgés</span></div>
       </div>
     </section>
 
@@ -180,7 +146,7 @@
     </section>
   </main>
 
-  <footer class="footer">NearConnect Africa — Organizer</footer>
+  <footer class="footer">NearConnect Africa — Espace organisateur</footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
