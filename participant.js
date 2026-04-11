@@ -47,15 +47,30 @@
     try {
       const location = await nc.getLocation();
 
-      const { data, error } = await nc.invoke('join-space', {
-        body: {
-          public_code: publicCodeInput.value.trim().toUpperCase(),
-          ...location,
+      const resp = await fetch(`${window.NEARCONNECT_FUNCTIONS_BASE}/join-space`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': window.NEARCONNECT_SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${window.NEARCONNECT_SUPABASE_ANON_KEY}`,
         },
+        body: JSON.stringify({
+          public_code: publicCodeInput.value.trim().toUpperCase(),
+          lat: location.lat,
+          lng: location.lng,
+        }),
       });
 
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      const rawText = await resp.text();
+      console.log('JOIN-SPACE STATUS:', resp.status);
+      console.log('JOIN-SPACE RAW RESPONSE:', rawText);
+
+      let data = {};
+      try { data = JSON.parse(rawText); } catch (_) {}
+
+      if (!resp.ok) {
+        throw new Error(data?.error || data?.details || data?.message || rawText || `HTTP ${resp.status}`);
+      }
 
       nc.state.currentSpace = data.space;
       localStorage.setItem('nc_last_public_code', data.space.public_code);
@@ -71,7 +86,8 @@
         Code: ${data.space.public_code}<br>
         Ville: ${data.space.city}<br>
         Période: ${nc.formatDate(data.space.starts_at)} → ${nc.formatDate(data.space.ends_at)}<br>
-        Présence sur place: <strong>${data.access.in_radius ? 'Validée' : 'Refusée'}</strong>
+        Présence sur place: <strong>${data.access.in_radius ? 'Validée' : 'Refusée'}</strong><br>
+        Distance: ${data.access.distance_meters} m / ${data.access.allowed_radius_meters} m
       `;
 
       paymentPreview.innerHTML = `
@@ -80,7 +96,7 @@
       `;
 
       await loadProfiles();
-      nc.showMessage(messageBox, 'Espace rejoint avec succès.', 'success');
+      nc.showMessage(messageBox, data.message || 'Espace rejoint avec succès.', data.access.in_radius ? 'success' : 'info');
     } catch (e) {
       console.error('JOIN SPACE ERROR:', e);
       nc.showMessage(messageBox, e.message || 'Impossible de rejoindre l’espace.', 'error');
@@ -99,22 +115,44 @@
       const file = nc.qs('photoFile').files[0];
       const photo_base64 = file ? await nc.fileToBase64(file) : null;
 
-      const { data, error } = await nc.invoke('register-participant', {
-        body: {
-          public_code: publicCodeInput.value.trim().toUpperCase(),
-          display_name: nc.qs('displayName').value.trim(),
-          gender: nc.qs('gender').value,
-          age: Number(nc.qs('age').value),
-          whatsapp_number: nc.qs('whatsappNumber').value.trim(),
-          consent: true,
-          photo_base64,
-          photo_mime_type: file ? file.type : null,
-          ...location,
-        },
+      const payload = {
+        public_code: publicCodeInput.value.trim().toUpperCase(),
+        display_name: nc.qs('displayName').value.trim(),
+        gender: nc.qs('gender').value,
+        age: Number(nc.qs('age').value),
+        whatsapp_number: nc.qs('whatsappNumber').value.trim(),
+        consent: true,
+        photo_base64,
+        photo_mime_type: file ? file.type : null,
+        lat: location.lat,
+        lng: location.lng,
+      };
+
+      console.log('REGISTER-PARTICIPANT BODY:', {
+        ...payload,
+        photo_base64: payload.photo_base64 ? `[base64 length=${payload.photo_base64.length}]` : null,
       });
 
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      const resp = await fetch(`${window.NEARCONNECT_FUNCTIONS_BASE}/register-participant`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': window.NEARCONNECT_SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${window.NEARCONNECT_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const rawText = await resp.text();
+      console.log('REGISTER-PARTICIPANT STATUS:', resp.status);
+      console.log('REGISTER-PARTICIPANT RAW RESPONSE:', rawText);
+
+      let data = {};
+      try { data = JSON.parse(rawText); } catch (_) {}
+
+      if (!resp.ok) {
+        throw new Error(data?.error || data?.details || data?.message || rawText || `HTTP ${resp.status}`);
+      }
 
       localStorage.setItem('nc_participant_token', data.participant_session_token);
       localStorage.setItem('nc_participant_id', data.participant.id);
@@ -124,6 +162,7 @@
 
       nc.showMessage(messageBox, 'Profil publié avec succès.', 'success');
       await loadProfiles();
+      registerForm.reset();
     } catch (e2) {
       console.error('REGISTER PARTICIPANT ERROR:', e2);
       nc.showMessage(messageBox, e2.message || 'Impossible de publier le profil.', 'error');
@@ -158,7 +197,7 @@
       try { data = JSON.parse(rawText); } catch (_) {}
 
       if (!resp.ok) {
-        throw new Error(data?.error || data?.message || rawText || `HTTP ${resp.status}`);
+        throw new Error(data?.error || data?.details || data?.message || rawText || `HTTP ${resp.status}`);
       }
 
       if (data.already_paid) {
@@ -186,13 +225,12 @@
 
   async function loadProfiles() {
     profilesList.innerHTML = '';
-
     const token = nc.state.participantToken || localStorage.getItem('nc_participant_token');
 
     if (!token) {
       if (!nc.state.currentSpace?.id) return;
 
-      const { data, error } = await sb
+      const { data, error } = await window.sb
         .from('participants_public')
         .select('*')
         .eq('space_id', nc.state.currentSpace.id)
@@ -282,14 +320,14 @@
     });
   }
 
-  joinForm.addEventListener('submit', async (e) => {
+  joinForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     await joinSpace();
   });
 
-  registerForm.addEventListener('submit', registerParticipant);
-  startPaymentBtn.addEventListener('click', startPayment);
-  refreshProfilesBtn.addEventListener('click', loadProfiles);
+  registerForm?.addEventListener('submit', registerParticipant);
+  startPaymentBtn?.addEventListener('click', startPayment);
+  refreshProfilesBtn?.addEventListener('click', loadProfiles);
 
   if (codeFromQuery) {
     try { await joinSpace(); } catch (_) {}
