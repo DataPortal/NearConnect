@@ -45,25 +45,23 @@
     console.log(`${name.toUpperCase()} RAW RESPONSE:`, rawText);
 
     let data = {};
-    try {
-      data = JSON.parse(rawText);
-    } catch (_) {}
+    try { data = JSON.parse(rawText); } catch (_) {}
 
     if (!resp.ok) {
-      throw new Error(data?.error || data?.message || rawText || `HTTP ${resp.status}`);
+      throw new Error(data?.error || data?.details || data?.message || rawText || `HTTP ${resp.status}`);
     }
 
     return data;
   }
 
   function showOrganizerSections() {
-    nc.qs('organizerIdentitySection').classList.remove('hidden');
-    nc.qs('organizerCreateSection').classList.remove('hidden');
-    nc.qs('organizerResultSection').classList.remove('hidden');
-    nc.qs('organizerStatsSection').classList.remove('hidden');
-    nc.qs('organizerStatusSection').classList.remove('hidden');
-    nc.qs('organizerCitySection').classList.remove('hidden');
-    nc.qs('organizerSpacesSection').classList.remove('hidden');
+    nc.qs('organizerIdentitySection')?.classList.remove('hidden');
+    nc.qs('organizerCreateSection')?.classList.remove('hidden');
+    nc.qs('organizerResultSection')?.classList.remove('hidden');
+    nc.qs('organizerStatsSection')?.classList.remove('hidden');
+    nc.qs('organizerStatusSection')?.classList.remove('hidden');
+    nc.qs('organizerCitySection')?.classList.remove('hidden');
+    nc.qs('organizerSpacesSection')?.classList.remove('hidden');
   }
 
   function localToIso(value) {
@@ -71,16 +69,12 @@
   }
 
   async function renderQrToCanvas(canvas, value) {
-    if (!value || !canvas) return;
-
+    if (!value || !canvas || typeof QRCode === 'undefined') return;
     await QRCode.toCanvas(canvas, value, {
       width: 280,
       margin: 2,
       errorCorrectionLevel: 'H',
-      color: {
-        dark: '#111111',
-        light: '#ffffff',
-      },
+      color: { dark: '#111111', light: '#ffffff' },
     });
   }
 
@@ -92,18 +86,20 @@
 
     await renderQrToCanvas(latestQrCanvas, latestQrValue);
 
-    latestQrMeta.innerHTML = `
-      <strong>${space.event_name}</strong><br>
-      Lieu: ${space.venue_name || '-'}<br>
-      Code public: ${space.public_code}<br>
-      Ville: ${space.city}<br>
-      Profils: ${space.total_profiles || 0}<br>
-      Payés: ${space.total_paid || 0}<br>
-      Revenu: ${Number(space.total_revenue || 0).toFixed(2)} ${space.currency_code || ''}<br>
-      Début: ${nc.formatDate(space.starts_at)}<br>
-      Fin: ${nc.formatDate(space.ends_at)}<br>
-      Lien client: <a href="${space.qr_url}" target="_blank" rel="noopener">${space.qr_url}</a>
-    `;
+    if (latestQrMeta) {
+      latestQrMeta.innerHTML = `
+        <strong>${space.event_name}</strong><br>
+        Lieu: ${space.venue_name || '-'}<br>
+        Code public: ${space.public_code}<br>
+        Ville: ${space.city}<br>
+        Profils: ${space.total_profiles || 0}<br>
+        Payés: ${space.total_paid || 0}<br>
+        Revenu: ${Number(space.total_revenue || 0).toFixed(2)} ${space.currency_code || ''}<br>
+        Début: ${nc.formatDate(space.starts_at)}<br>
+        Fin: ${nc.formatDate(space.ends_at)}<br>
+        Lien client: <a href="${space.qr_url}" target="_blank" rel="noopener">${space.qr_url}</a>
+      `;
+    }
   }
 
   function downloadCanvas(canvas, filename) {
@@ -115,6 +111,7 @@
   }
 
   function renderCityStats(byCity = []) {
+    if (!organizerCityStats) return;
     organizerCityStats.innerHTML = '';
 
     if (!byCity.length) {
@@ -139,12 +136,14 @@
   async function refreshOrganizerData() {
     const data = await callOrganizerFunction('get-organizer-stats', 'GET');
 
-    identity.innerHTML = `
-      <strong>${data.organizer.full_name}</strong><br>
-      ${data.organizer.organization_name || '-'}<br>
-      ${data.organizer.city || '-'} — ${data.organizer.country_code || '-'}<br>
-      WhatsApp: ${data.organizer.whatsapp_number || '-'}
-    `;
+    if (identity) {
+      identity.innerHTML = `
+        <strong>${data.organizer.full_name}</strong><br>
+        ${data.organizer.organization_name || '-'}<br>
+        ${data.organizer.city || '-'} — ${data.organizer.country_code || '-'}<br>
+        WhatsApp: ${data.organizer.whatsapp_number || '-'}
+      `;
+    }
 
     nc.qs('orgTotalSpaces').textContent = String(data.summary?.total_spaces || 0);
     nc.qs('orgTotalProfiles').textContent = String(data.summary?.total_profiles || 0);
@@ -198,6 +197,7 @@
   }
 
   function renderSpaces(spaces) {
+    if (!spacesList) return;
     spacesList.innerHTML = '';
 
     if (!spaces.length) {
@@ -211,7 +211,6 @@
       card.dataset.spaceId = space.id;
       card.dataset.qrUrl = space.qr_url || '';
       card.dataset.publicCode = space.public_code || '';
-      card.dataset.eventName = space.event_name || '';
       card.innerHTML = buildSpaceCard(space);
       spacesList.appendChild(card);
     });
@@ -223,7 +222,6 @@
         const qrUrl = card.dataset.qrUrl;
         const qrBox = document.getElementById(`qr-box-${spaceId}`);
         const qrCanvas = document.getElementById(`qr-canvas-${spaceId}`);
-
         qrBox.style.display = 'block';
         await renderQrToCanvas(qrCanvas, qrUrl);
       });
@@ -268,30 +266,26 @@
     });
   }
 
-  if (downloadLatestQrBtn) {
-    downloadLatestQrBtn.addEventListener('click', () => {
-      if (!latestQrValue) {
-        nc.showMessage(box, 'Aucun QR disponible à télécharger.', 'error');
-        return;
-      }
-      downloadCanvas(latestQrCanvas, latestQrFileName);
-    });
-  }
+  downloadLatestQrBtn?.addEventListener('click', () => {
+    if (!latestQrValue) {
+      nc.showMessage(box, 'Aucun QR disponible à télécharger.', 'error');
+      return;
+    }
+    downloadCanvas(latestQrCanvas, latestQrFileName);
+  });
 
-  if (copyLatestQrLinkBtn) {
-    copyLatestQrLinkBtn.addEventListener('click', async () => {
-      try {
-        if (!latestQrValue) throw new Error('Aucun lien client disponible.');
-        await navigator.clipboard.writeText(latestQrValue);
-        nc.showMessage(box, 'Lien client copié.', 'success');
-      } catch (err) {
-        console.error('COPY LATEST LINK ERROR:', err);
-        nc.showMessage(box, err.message || 'Impossible de copier le lien.', 'error');
-      }
-    });
-  }
+  copyLatestQrLinkBtn?.addEventListener('click', async () => {
+    try {
+      if (!latestQrValue) throw new Error('Aucun lien client disponible.');
+      await navigator.clipboard.writeText(latestQrValue);
+      nc.showMessage(box, 'Lien client copié.', 'success');
+    } catch (err) {
+      console.error('COPY LATEST LINK ERROR:', err);
+      nc.showMessage(box, err.message || 'Impossible de copier le lien.', 'error');
+    }
+  });
 
-  nc.qs('organizerLoginForm').addEventListener('submit', async (e) => {
+  nc.qs('organizerLoginForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     nc.hideMessage(box);
 
@@ -314,20 +308,15 @@
       console.log('ORGANIZER-LOGIN RAW RESPONSE:', rawText);
 
       let data = {};
-      try {
-        data = JSON.parse(rawText);
-      } catch (_) {}
+      try { data = JSON.parse(rawText); } catch (_) {}
 
       if (!resp.ok) {
-        throw new Error(data?.error || data?.message || rawText || `HTTP ${resp.status}`);
+        throw new Error(data?.error || data?.details || data?.message || rawText || `HTTP ${resp.status}`);
       }
 
       localStorage.setItem('nc_organizer_code', accessCode);
-      nc.state.organizerCode = accessCode;
-
       showOrganizerSections();
       await refreshOrganizerData();
-
       nc.showMessage(box, 'Connexion organisateur réussie.', 'success');
     } catch (err) {
       console.error('ORGANIZER LOGIN ERROR:', err);
@@ -335,7 +324,7 @@
     }
   });
 
-  nc.qs('organizerCreateForm').addEventListener('submit', async (e) => {
+  nc.qs('organizerCreateForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     nc.hideMessage(box);
 
@@ -353,13 +342,15 @@
         longitude: location.lng,
       });
 
-      result.innerHTML = `
-        <strong>Espace créé</strong><br>
-        Événement: ${data.space.event_name}<br>
-        Code public: <strong>${data.space.public_code}</strong><br>
-        Space ID: ${data.space.id}<br>
-        Lien client: <a href="${data.qr_url}" target="_blank" rel="noopener">${data.qr_url}</a>
-      `;
+      if (result) {
+        result.innerHTML = `
+          <strong>Espace créé</strong><br>
+          Événement: ${data.space.event_name}<br>
+          Code public: <strong>${data.space.public_code}</strong><br>
+          Space ID: ${data.space.id}<br>
+          Lien client: <a href="${data.qr_url}" target="_blank" rel="noopener">${data.qr_url}</a>
+        `;
+      }
 
       const enrichedSpace = {
         ...data.space,
@@ -370,7 +361,6 @@
       };
 
       await setLatestQr(enrichedSpace);
-
       nc.showMessage(box, 'Espace créé avec succès.', 'success');
       await refreshOrganizerData();
     } catch (err) {
