@@ -13,13 +13,11 @@
         <div class="logo">N</div>
         <div>
           <h1>NearConnect Admin</h1>
-          <p>Super admin / administration régionale</p>
+          <p>Vue globale de supervision</p>
         </div>
       </div>
       <div class="nav">
-        <a class="btn btn-soft" href="organizer.html">Organizer</a>
-        <a class="btn btn-soft" href="index.html">Client</a>
-        <a class="btn btn-soft" href="dashboard.html">Dashboard</a>
+        <a class="btn btn-soft" href="dashboard.html">Vue globale</a>
       </div>
     </div>
   </header>
@@ -28,10 +26,7 @@
     <section class="panel hero">
       <span class="badge">Super Admin</span>
       <h2>Créer des organisateurs et piloter la plateforme</h2>
-      <p>
-        Le super admin crée les organisateurs autorisés, suit les accès, confirme les paiements,
-        ferme les espaces et lance les purges.
-      </p>
+      <p>Le super admin crée les organisateurs autorisés, suit les accès et supervise l’ensemble des activités.</p>
     </section>
 
     <section class="panel">
@@ -84,55 +79,9 @@
         <div class="info-box">Aucune donnée chargée.</div>
       </div>
     </section>
-
-    <section class="panel">
-      <h3>Confirmer un paiement</h3>
-      <form id="confirmPaymentForm" class="form">
-        <div class="grid-2">
-          <label>Référence paiement
-            <input id="paymentReference" type="text" required />
-          </label>
-          <label>Référence fournisseur optionnelle
-            <input id="providerReference" type="text" />
-          </label>
-        </div>
-        <div class="actions">
-          <button class="btn btn-success" type="submit">Confirmer le paiement</button>
-        </div>
-      </form>
-    </section>
-
-    <section class="panel">
-      <h3>Fermer un espace</h3>
-      <form id="closeSpaceForm" class="form">
-        <div class="grid-2">
-          <label>Code public
-            <input id="closePublicCode" type="text" required />
-          </label>
-          <label>PIN admin
-            <input id="closeAdminPin" type="password" required />
-          </label>
-        </div>
-        <div class="actions">
-          <button class="btn btn-danger" type="submit">Fermer l’espace</button>
-        </div>
-      </form>
-    </section>
-
-    <section class="panel">
-      <h3>Purger un espace</h3>
-      <form id="purgeSpaceForm" class="form">
-        <label>Space ID
-          <input id="purgeSpaceId" type="text" required />
-        </label>
-        <div class="actions">
-          <button class="btn btn-danger" type="submit">Purger définitivement</button>
-        </div>
-      </form>
-    </section>
   </main>
 
-  <footer class="footer">NearConnect Africa — Admin</footer>
+  <footer class="footer">NearConnect Africa — Espace admin</footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="env.js"></script>
