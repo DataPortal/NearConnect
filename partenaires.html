@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NearConnect Partenaires</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="header">
+    <div class="container header-inner">
+      <div class="brand">
+        <div class="logo">N</div>
+        <div>
+          <h1>NearConnect Partenaires</h1>
+          <p>Portail des organisateurs validés</p>
+        </div>
+      </div>
+      <div class="nav">
+        <span class="badge">Espace partenaires</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="container page">
+    <section class="panel hero">
+      <span class="badge">Partenaires</span>
+      <h2>Créer et gérer vos espaces</h2>
+      <p>Connectez-vous avec votre code d’accès, créez un espace et partagez le QR code avec vos clients.</p>
+    </section>
+
+    <section class="panel">
+      <div id="organizerMessage" class="message hidden"></div>
+
+      <form id="organizerLoginForm" class="form">
+        <label>Code d’accès partenaire
+          <input id="organizerAccessCode" type="text" placeholder="Ex: ORG-AB12CD34" required />
+        </label>
+        <div class="actions">
+          <button class="btn btn-primary" type="submit">Se connecter</button>
+        </div>
+      </form>
+    </section>
+
+    <section id="organizerIdentitySection" class="panel hidden">
+      <h3>Partenaire connecté</h3>
+      <div id="organizerIdentity" class="info-box"></div>
+    </section>
+
+    <section id="organizerCreateSection" class="panel hidden">
+      <h3>Créer un espace</h3>
+      <form id="organizerCreateForm" class="form">
+        <div class="grid-2">
+          <label>Pays
+            <input id="countryCode" required />
+          </label>
+          <label>Ville
+            <input id="city" required />
+          </label>
+        </div>
+
+        <div class="grid-2">
+          <label>Lieu
+            <input id="venueName" required />
+          </label>
+          <label>Nom de l’événement
+            <input id="eventName" required />
+          </label>
+        </div>
+
+        <div class="grid-2">
+          <label>Début
+            <input id="startsAt" type="datetime-local" required />
+          </label>
+          <label>Fin
+            <input id="endsAt" type="datetime-local" required />
+          </label>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-primary" type="submit">Créer l’espace</button>
+        </div>
+      </form>
+    </section>
+
+    <section id="organizerResultSection" class="panel hidden">
+      <h3>Dernier espace créé</h3>
+      <div id="organizerResult" class="info-box"></div>
+
+      <div class="panel panel-soft" style="margin-top:16px;">
+        <h4>QR code du dernier espace</h4>
+        <div class="cards" style="grid-template-columns: 320px 1fr; align-items:start;">
+          <div class="info-box" style="display:grid; place-items:center;">
+            <canvas id="latestQrCanvas" width="280" height="280" style="background:white; border-radius:14px; padding:12px;"></canvas>
+          </div>
+          <div class="info-box">
+            <div id="latestQrMeta">Aucun QR généré.</div>
+            <div class="actions" style="margin-top:14px;">
+              <button id="downloadLatestQrBtn" class="btn btn-success" type="button">Télécharger le QR</button>
+              <button id="copyLatestQrLinkBtn" class="btn btn-soft" type="button">Copier le lien client</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="organizerStatsSection" class="panel hidden">
+      <h3>Résumé</h3>
+      <div class="kpi">
+        <div class="info-box"><strong id="orgTotalSpaces">0</strong><span>Espaces</span></div>
+        <div class="info-box"><strong id="orgTotalProfiles">0</strong><span>Profils</span></div>
+        <div class="info-box"><strong id="orgTotalPaid">0</strong><span>Payés</span></div>
+        <div class="info-box"><strong id="orgTotalRevenue">0</strong><span>Revenu</span></div>
+      </div>
+    </section>
+
+    <section id="organizerStatusSection" class="panel hidden">
+      <h3>Répartition des espaces</h3>
+      <div class="kpi">
+        <div class="info-box"><strong id="orgActiveSpaces">0</strong><span>Actifs</span></div>
+        <div class="info-box"><strong id="orgDraftSpaces">0</strong><span>Brouillons</span></div>
+        <div class="info-box"><strong id="orgClosedSpaces">0</strong><span>Fermés</span></div>
+        <div class="info-box"><strong id="orgExpiredSpaces">0</strong><span>Expirés</span></div>
+        <div class="info-box"><strong id="orgPurgedSpaces">0</strong><span>Purgés</span></div>
+      </div>
+    </section>
+
+    <section id="organizerCitySection" class="panel hidden">
+      <h3>Performance par ville</h3>
+      <div id="organizerCityStats" class="cards">
+        <div class="info-box">Aucune statistique par ville disponible.</div>
+      </div>
+    </section>
+
+    <section id="organizerSpacesSection" class="panel hidden">
+      <h3>Mes espaces</h3>
+      <div id="organizerSpacesList" class="cards"></div>
+    </section>
+  </main>
+
+  <footer class="footer">NearConnect Africa — Partenaires</footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+  <script src="env.js"></script>
+  <script src="supabase.js"></script>
+  <script src="utils.js"></script>
+  <script src="partenaires.js"></script>
+</body>
+</html>
