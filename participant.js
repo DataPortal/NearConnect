@@ -15,7 +15,14 @@
   const photoModalBackdrop = nc.qs('photoModalBackdrop');
 
   const codeFromQuery = nc.getQueryCode();
-  if (codeFromQuery) publicCodeInput.value = codeFromQuery;
+  const savedPublicCode = localStorage.getItem('nc_last_public_code') || '';
+
+  if (codeFromQuery) {
+    publicCodeInput.value = codeFromQuery;
+    localStorage.setItem('nc_last_public_code', codeFromQuery);
+  } else if (savedPublicCode) {
+    publicCodeInput.value = savedPublicCode;
+  }
 
   function openPhotoModal(src, caption = '') {
     if (!src) return;
@@ -32,6 +39,28 @@
     document.body.style.overflow = '';
   }
 
+  function showClientSections() {
+    nc.qs('spaceSection')?.classList.remove('hidden');
+    nc.qs('registerSection')?.classList.remove('hidden');
+    nc.qs('paymentSection')?.classList.remove('hidden');
+    nc.qs('profilesSection')?.classList.remove('hidden');
+  }
+
+  function saveClientState(space) {
+    if (!space) return;
+    nc.state.currentSpace = space;
+
+    if (space.public_code) {
+      localStorage.setItem('nc_last_public_code', space.public_code);
+      if (publicCodeInput) publicCodeInput.value = space.public_code;
+    }
+  }
+
+  function clearClientSpaceMemory() {
+    localStorage.removeItem('nc_last_public_code');
+    nc.state.currentSpace = null;
+  }
+
   photoModalClose?.addEventListener('click', closePhotoModal);
   photoModalBackdrop?.addEventListener('click', closePhotoModal);
 
@@ -41,10 +70,16 @@
     }
   });
 
-  async function joinSpace() {
-    nc.hideMessage(messageBox);
+  async function joinSpace({ silent = false } = {}) {
+    if (!silent) nc.hideMessage(messageBox);
 
     try {
+      const publicCode = publicCodeInput.value.trim().toUpperCase();
+
+      if (!publicCode) {
+        throw new Error('Le code public de l’espace est requis.');
+      }
+
       const location = await nc.getLocation();
 
       const resp = await fetch(`${window.NEARCONNECT_FUNCTIONS_BASE}/join-space`, {
@@ -55,7 +90,7 @@
           Authorization: `Bearer ${window.NEARCONNECT_SUPABASE_ANON_KEY}`,
         },
         body: JSON.stringify({
-          public_code: publicCodeInput.value.trim().toUpperCase(),
+          public_code: publicCode,
           lat: location.lat,
           lng: location.lng,
         }),
@@ -66,40 +101,62 @@
       console.log('JOIN-SPACE RAW RESPONSE:', rawText);
 
       let data = {};
-      try { data = JSON.parse(rawText); } catch (_) {}
+      try {
+        data = JSON.parse(rawText);
+      } catch (_) {}
 
       if (!resp.ok) {
-        throw new Error(data?.error || data?.details || data?.message || rawText || `HTTP ${resp.status}`);
+        throw new Error(
+          data?.error ||
+          data?.details ||
+          data?.message ||
+          rawText ||
+          `HTTP ${resp.status}`
+        );
       }
 
-      nc.state.currentSpace = data.space;
-      localStorage.setItem('nc_last_public_code', data.space.public_code);
+      saveClientState(data.space);
+      showClientSections();
 
-      nc.qs('spaceSection')?.classList.remove('hidden');
-      nc.qs('registerSection')?.classList.remove('hidden');
-      nc.qs('paymentSection')?.classList.remove('hidden');
-      nc.qs('profilesSection')?.classList.remove('hidden');
+      const spaceInfo = nc.qs('spaceInfo');
+      if (spaceInfo) {
+        spaceInfo.innerHTML = `
+          <strong>${data.space.venue_name}</strong><br>
+          ${data.space.event_name}<br>
+          Code: ${data.space.public_code}<br>
+          Ville: ${data.space.city}<br>
+          Période: ${nc.formatDate(data.space.starts_at)} → ${nc.formatDate(data.space.ends_at)}<br>
+          Présence sur place: <strong>${data.access.in_radius ? 'Validée' : 'Refusée'}</strong><br>
+          Distance: ${data.access.distance_meters} m / ${data.access.allowed_radius_meters} m
+        `;
+      }
 
-      nc.qs('spaceInfo').innerHTML = `
-        <strong>${data.space.venue_name}</strong><br>
-        ${data.space.event_name}<br>
-        Code: ${data.space.public_code}<br>
-        Ville: ${data.space.city}<br>
-        Période: ${nc.formatDate(data.space.starts_at)} → ${nc.formatDate(data.space.ends_at)}<br>
-        Présence sur place: <strong>${data.access.in_radius ? 'Validée' : 'Refusée'}</strong><br>
-        Distance: ${data.access.distance_meters} m / ${data.access.allowed_radius_meters} m
-      `;
-
-      paymentPreview.innerHTML = `
-        Débloquez tous les contacts pour <strong>${data.payment_preview.local_amount} ${data.payment_preview.currency_code}</strong>.<br>
-        Présence sur place: <strong>${data.access.in_radius ? 'Confirmée' : 'Non confirmée'}</strong>
-      `;
+      if (paymentPreview) {
+        paymentPreview.innerHTML = `
+          Débloquez tous les contacts pour <strong>${data.payment_preview.local_amount} ${data.payment_preview.currency_code}</strong>.<br>
+          Présence sur place: <strong>${data.access.in_radius ? 'Confirmée' : 'Non confirmée'}</strong>
+        `;
+      }
 
       await loadProfiles();
-      nc.showMessage(messageBox, data.message || 'Espace rejoint avec succès.', data.access.in_radius ? 'success' : 'info');
+
+      if (!silent) {
+        nc.showMessage(
+          messageBox,
+          data.message || 'Espace rejoint avec succès.',
+          data.access.in_radius ? 'success' : 'info'
+        );
+      }
     } catch (e) {
       console.error('JOIN SPACE ERROR:', e);
-      nc.showMessage(messageBox, e.message || 'Impossible de rejoindre l’espace.', 'error');
+
+      if (!silent) {
+        nc.showMessage(
+          messageBox,
+          e.message || 'Impossible de rejoindre l’espace.',
+          'error'
+        );
+      }
     }
   }
 
@@ -111,6 +168,16 @@
       const consent = nc.qs('consent')?.checked;
       if (!consent) throw new Error('Le consentement est obligatoire.');
 
+      const currentPublicCode =
+        (nc.state.currentSpace && nc.state.currentSpace.public_code) ||
+        publicCodeInput.value.trim().toUpperCase() ||
+        localStorage.getItem('nc_last_public_code') ||
+        '';
+
+      if (!currentPublicCode) {
+        throw new Error("Aucun espace actif n'est mémorisé.");
+      }
+
       const location = await nc.getLocation();
       const file = nc.qs('photoFile')?.files?.[0] || null;
 
@@ -121,7 +188,7 @@
       const photo_base64 = file ? await nc.fileToBase64(file) : null;
 
       const payload = {
-        public_code: publicCodeInput.value.trim().toUpperCase(),
+        public_code: currentPublicCode,
         display_name: nc.qs('displayName')?.value?.trim() || '',
         gender: nc.qs('gender')?.value || '',
         age: Number(nc.qs('age')?.value),
@@ -148,7 +215,9 @@
       console.log('REGISTER-PARTICIPANT RAW RESPONSE:', rawText);
 
       let data = {};
-      try { data = JSON.parse(rawText); } catch (_) {}
+      try {
+        data = JSON.parse(rawText);
+      } catch (_) {}
 
       if (!resp.ok) {
         const detailedMessage = [
@@ -158,7 +227,9 @@
           data?.hint ? `HINT: ${data.hint}` : '',
           data?.code ? `CODE: ${data.code}` : '',
           !data?.error && rawText ? `RAW: ${rawText}` : '',
-        ].filter(Boolean).join('\n');
+        ]
+          .filter(Boolean)
+          .join('\n');
 
         throw new Error(detailedMessage || `HTTP ${resp.status}`);
       }
@@ -174,7 +245,11 @@
       registerForm?.reset();
     } catch (e2) {
       console.error('REGISTER PARTICIPANT ERROR:', e2);
-      nc.showMessage(messageBox, e2.message || 'Impossible de publier le profil.', 'error');
+      nc.showMessage(
+        messageBox,
+        e2.message || 'Impossible de publier le profil.',
+        'error'
+      );
     }
   }
 
@@ -183,7 +258,7 @@
 
     try {
       const token = nc.state.participantToken || localStorage.getItem('nc_participant_token');
-      if (!token) throw new Error('Inscris-toi d’abord.');
+      if (!token) throw new Error("Inscris-toi d’abord.");
 
       const location = await nc.getLocation();
 
@@ -206,10 +281,18 @@
       console.log('START-PAYMENT RAW RESPONSE:', rawText);
 
       let data = {};
-      try { data = JSON.parse(rawText); } catch (_) {}
+      try {
+        data = JSON.parse(rawText);
+      } catch (_) {}
 
       if (!resp.ok) {
-        throw new Error(data?.error || data?.details || data?.message || rawText || `HTTP ${resp.status}`);
+        throw new Error(
+          data?.error ||
+          data?.details ||
+          data?.message ||
+          rawText ||
+          `HTTP ${resp.status}`
+        );
       }
 
       if (data.already_paid) {
@@ -221,17 +304,27 @@
       localStorage.setItem('nc_payment_reference', data.payment.payment_reference);
       nc.state.paymentReference = data.payment.payment_reference;
 
-      paymentPreview.innerHTML = `
-        <strong>${data.instructions.amount} ${data.instructions.currency_code}</strong><br>
-        Destinataire: <strong>${data.instructions.recipient_msisdn}</strong><br>
-        Référence: <strong>${data.instructions.payment_reference}</strong><br>
-        ${data.instructions.message}
-      `;
+      if (paymentPreview) {
+        paymentPreview.innerHTML = `
+          <strong>${data.instructions.amount} ${data.instructions.currency_code}</strong><br>
+          Destinataire: <strong>${data.instructions.recipient_msisdn}</strong><br>
+          Référence: <strong>${data.instructions.payment_reference}</strong><br>
+          ${data.instructions.message}
+        `;
+      }
 
-      nc.showMessage(messageBox, 'Instructions de paiement générées. Confirme ensuite le paiement côté admin.', 'info');
+      nc.showMessage(
+        messageBox,
+        'Instructions de paiement générées. Confirme ensuite le paiement côté admin.',
+        'info'
+      );
     } catch (e) {
       console.error('START PAYMENT ERROR:', e);
-      nc.showMessage(messageBox, e.message || 'Impossible de lancer le paiement.', 'error');
+      nc.showMessage(
+        messageBox,
+        e.message || 'Impossible de lancer le paiement.',
+        'error'
+      );
     }
   }
 
@@ -277,10 +370,16 @@
     console.log('GET-UNLOCKED-PROFILES RAW RESPONSE:', rawText);
 
     let data = {};
-    try { data = JSON.parse(rawText); } catch (_) {}
+    try {
+      data = JSON.parse(rawText);
+    } catch (_) {}
 
     if (!resp.ok) {
-      nc.showMessage(messageBox, data?.error || data?.message || 'Impossible de charger les profils.', 'error');
+      nc.showMessage(
+        messageBox,
+        data?.error || data?.message || 'Impossible de charger les profils.',
+        'error'
+      );
       return;
     }
 
@@ -291,7 +390,8 @@
     profilesList.innerHTML = '';
 
     if (!profiles.length) {
-      profilesList.innerHTML = '<div class="info-box">Aucun profil visible pour le moment.</div>';
+      profilesList.innerHTML =
+        '<div class="info-box">Aucun profil visible pour le moment.</div>';
       return;
     }
 
@@ -339,14 +439,22 @@
 
   joinForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
-    await joinSpace();
+    await joinSpace({ silent: false });
   });
 
   registerForm?.addEventListener('submit', registerParticipant);
   startPaymentBtn?.addEventListener('click', startPayment);
   refreshProfilesBtn?.addEventListener('click', loadProfiles);
 
-  if (codeFromQuery) {
-    try { await joinSpace(); } catch (_) {}
+  const codeToRestore =
+    codeFromQuery ||
+    savedPublicCode ||
+    publicCodeInput.value.trim();
+
+  if (codeToRestore) {
+    publicCodeInput.value = codeToRestore.toUpperCase();
+    try {
+      await joinSpace({ silent: true });
+    } catch (_) {}
   }
 })();
