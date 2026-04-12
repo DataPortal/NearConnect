@@ -6,7 +6,9 @@
   <title>NearConnect Partenaires</title>
   <link rel="stylesheet" href="style.css" />
 </head>
-<body>
+<body class="page-with-global-nav">
+  <div id="globalNavMount"></div>
+
   <header class="header">
     <div class="container header-inner">
       <div class="brand">
@@ -26,7 +28,9 @@
     <section class="panel hero">
       <span class="badge">Partenaires</span>
       <h2>Créer et gérer vos espaces</h2>
-      <p>Connectez-vous avec votre code d’accès, créez un espace et partagez le QR code avec vos clients.</p>
+      <p>
+        Connectez-vous avec votre code d’accès, créez un espace et partagez le QR code avec vos clients.
+      </p>
     </section>
 
     <section class="panel">
@@ -52,19 +56,19 @@
       <form id="organizerCreateForm" class="form">
         <div class="grid-2">
           <label>Pays
-            <input id="countryCode" required />
+            <input id="countryCode" placeholder="Ex: RW, CD, KE..." required />
           </label>
           <label>Ville
-            <input id="city" required />
+            <input id="city" placeholder="Ex: Kigali" required />
           </label>
         </div>
 
         <div class="grid-2">
           <label>Lieu
-            <input id="venueName" required />
+            <input id="venueName" placeholder="Ex: Lounge XYZ" required />
           </label>
           <label>Nom de l’événement
-            <input id="eventName" required />
+            <input id="eventName" placeholder="Ex: Friday Night" required />
           </label>
         </div>
 
@@ -75,6 +79,11 @@
           <label>Fin
             <input id="endsAt" type="datetime-local" required />
           </label>
+        </div>
+
+        <div class="helper-box">
+          La position du lieu sera capturée automatiquement au moment de la création.
+          Le rayon NearConnect reste limité à <strong>100 mètres maximum</strong>.
         </div>
 
         <div class="actions">
@@ -145,6 +154,7 @@
   <script src="env.js"></script>
   <script src="supabase.js"></script>
   <script src="utils.js"></script>
+  <script src="nav.js"></script>
   <script src="partenaires.js"></script>
 </body>
 </html>
