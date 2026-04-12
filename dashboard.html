@@ -6,7 +6,9 @@
   <title>NearConnect Dashboard</title>
   <link rel="stylesheet" href="style.css" />
 </head>
-<body>
+<body class="page-with-global-nav">
+  <div id="globalNavMount"></div>
+
   <header class="header">
     <div class="container header-inner">
       <div class="brand">
@@ -17,7 +19,7 @@
         </div>
       </div>
       <div class="nav">
-        <a class="btn btn-soft" href="admin.html">Admin</a>
+        <span class="badge">Vue globale</span>
       </div>
     </div>
   </header>
@@ -76,6 +78,7 @@
   <script src="env.js"></script>
   <script src="supabase.js"></script>
   <script src="utils.js"></script>
+  <script src="nav.js"></script>
   <script>
     const msg = document.getElementById('dashMessage');
 
