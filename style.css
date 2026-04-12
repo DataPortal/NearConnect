@@ -440,3 +440,127 @@ input::placeholder {
     padding: 22px;
   }
 }
+.global-nav-shell {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(14px);
+  background: rgba(8, 16, 29, 0.78);
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  box-shadow: 0 10px 30px rgba(0,0,0,.14);
+}
+
+.global-nav-inner {
+  min-height: 74px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 12px 0;
+}
+
+.global-nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.global-nav-logo {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 1rem;
+  color: white;
+  background: linear-gradient(135deg, #4f8cff, #8b6cff);
+  box-shadow: 0 12px 30px rgba(79,140,255,.28);
+  flex: 0 0 auto;
+}
+
+.global-nav-brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+.global-nav-brand-text strong {
+  font-size: 1rem;
+  color: var(--text);
+}
+
+.global-nav-brand-text span {
+  font-size: .82rem;
+  color: var(--muted);
+}
+
+.global-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.nav-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  text-decoration: none;
+  color: var(--text);
+  padding: 11px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.04);
+  transition: all .2s ease;
+  font-weight: 600;
+  font-size: .92rem;
+}
+
+.nav-pill:hover {
+  transform: translateY(-1px);
+  background: rgba(255,255,255,.07);
+  border-color: rgba(255,255,255,.16);
+}
+
+.nav-pill.active {
+  background: linear-gradient(135deg, rgba(79,140,255,.22), rgba(139,108,255,.18));
+  border-color: rgba(79,140,255,.34);
+  box-shadow: 0 12px 24px rgba(79,140,255,.14);
+}
+
+.nav-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.45);
+  flex: 0 0 auto;
+}
+
+.nav-pill.active .nav-dot {
+  background: #7db1ff;
+  box-shadow: 0 0 0 4px rgba(125,177,255,.12);
+}
+
+.page-with-global-nav {
+  padding-top: 10px;
+}
+
+@media (max-width: 860px) {
+  .global-nav-inner {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .global-nav-links {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .nav-pill {
+    font-size: .88rem;
+    padding: 10px 12px;
+  }
+}
