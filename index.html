@@ -35,99 +35,28 @@
 
     <section class="panel panel-soft">
       <div id="messageBox" class="message hidden"></div>
+
       <form id="joinForm" class="form">
         <label>Code public de l’espace
           <input id="publicCode" type="text" placeholder="Ex: NC-4G7K9Q" required />
         </label>
+
         <div class="actions">
           <button class="btn btn-primary" type="submit">Rejoindre l’espace</button>
+          <button
+            id="changeSpaceBtn"
+            class="btn btn-soft"
+            type="button"
+            onclick="forgetCurrentSpace()"
+          >
+            Changer d’espace
+          </button>
         </div>
       </form>
-    </section>
 
-    <section id="spaceSection" class="panel hidden">
-      <h3>Espace actif</h3>
-      <div id="spaceInfo" class="info-box"></div>
-    </section>
-
-    <section id="registerSection" class="panel hidden">
-      <h3>Publier mon profil</h3>
-      <form id="registerForm" class="form">
-        <div class="grid-2">
-          <label>Nom / Pseudo
-            <input id="displayName" type="text" maxlength="20" required />
-          </label>
-          <label>WhatsApp (avec indicatif pays)
-            <input id="whatsappNumber" type="text" required />
-          </label>
-        </div>
-
-        <div class="grid-2">
-          <label>Sexe
-            <select id="gender" required>
-              <option value="">Sélectionner</option>
-              <option value="M">M</option>
-              <option value="F">F</option>
-              <option value="X">X</option>
-            </select>
-          </label>
-          <label>Âge
-            <input id="age" type="number" min="18" max="99" required />
-          </label>
-        </div>
-
-        <div class="grid-2">
-          <label>Photo (optionnelle, max 5 MB)
-            <input id="photoFile" type="file" accept="image/*" />
-          </label>
-          <label class="checkbox-line">
-            <input id="consent" type="checkbox" required />
-            <span>J’accepte la publication temporaire de mon profil pour cette soirée.</span>
-          </label>
-        </div>
-
-        <div class="actions">
-          <button class="btn btn-primary" type="submit">Publier mon profil</button>
-        </div>
-      </form>
-    </section>
-
-    <section id="paymentSection" class="panel hidden">
-      <h3>Accès premium</h3>
-      <div id="paymentPreview" class="info-box"></div>
-      <div class="actions" style="margin-top: 14px;">
-        <button id="startPaymentBtn" class="btn btn-success" type="button">Débloquer tous les contacts</button>
-        <button id="refreshProfilesBtn" class="btn btn-soft" type="button">Actualiser les profils</button>
+      <div class="helper-box" style="margin-top:14px;">
+        Le dernier espace rejoint reste mémorisé sur ce téléphone pour éviter de rescanner le QR code à chaque retour.
       </div>
     </section>
 
-    <section id="profilesSection" class="panel hidden">
-      <div class="section-row">
-        <div>
-          <h3>Profils visibles</h3>
-          <p class="muted">Clique sur une photo pour l’agrandir.</p>
-        </div>
-      </div>
-      <div id="profilesList" class="profile-grid"></div>
-    </section>
-  </main>
-
-  <div id="photoModal" class="photo-modal hidden">
-    <div class="photo-modal-backdrop" id="photoModalBackdrop"></div>
-    <div class="photo-modal-content">
-      <button id="photoModalClose" class="photo-modal-close" type="button">×</button>
-      <img id="photoModalImg" src="" alt="Photo profil" />
-      <div id="photoModalCaption" class="photo-modal-caption"></div>
-    </div>
-  </div>
-
-  <footer class="footer">NearConnect Africa — Espace client</footer>
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="env.js"></script>
-  <script src="supabase.js"></script>
-  <script src="utils.js"></script>
-  <script src="nav.js"></script>
-  <script src="participant.js"></script>
-</body>
-</html>
+    <section id="
