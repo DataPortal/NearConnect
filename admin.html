@@ -6,18 +6,20 @@
   <title>NearConnect Admin</title>
   <link rel="stylesheet" href="style.css" />
 </head>
-<body>
+<body class="page-with-global-nav">
+  <div id="globalNavMount"></div>
+
   <header class="header">
     <div class="container header-inner">
       <div class="brand">
         <div class="logo">N</div>
         <div>
           <h1>NearConnect Admin</h1>
-          <p>Vue globale de supervision</p>
+          <p>Gestion globale des partenaires</p>
         </div>
       </div>
       <div class="nav">
-        <a class="btn btn-soft" href="dashboard.html">Vue globale</a>
+        <span class="badge">Espace admin</span>
       </div>
     </div>
   </header>
@@ -25,8 +27,10 @@
   <main class="container page">
     <section class="panel hero">
       <span class="badge">Super Admin</span>
-      <h2>Créer des organisateurs et piloter la plateforme</h2>
-      <p>Le super admin crée les organisateurs autorisés, suit les accès et supervise l’ensemble des activités.</p>
+      <h2>Créer et superviser les partenaires</h2>
+      <p>
+        Le super admin crée les organisateurs autorisés et suit l’activité de la plateforme.
+      </p>
     </section>
 
     <section class="panel">
@@ -35,7 +39,7 @@
     </section>
 
     <section class="panel">
-      <h3>Créer un organisateur autorisé</h3>
+      <h3>Créer un partenaire autorisé</h3>
       <form id="createOrganizerForm" class="form">
         <div class="grid-2">
           <label>Nom complet
@@ -60,21 +64,21 @@
         </label>
 
         <div class="actions">
-          <button class="btn btn-primary" type="submit">Créer l’organisateur</button>
+          <button class="btn btn-primary" type="submit">Créer le partenaire</button>
           <button id="refreshOrganizersBtn" class="btn btn-soft" type="button">Actualiser la liste</button>
         </div>
       </form>
     </section>
 
     <section class="panel">
-      <h3>Dernier organisateur créé</h3>
+      <h3>Dernier partenaire créé</h3>
       <div id="latestOrganizerCard" class="info-box">
-        Aucun organisateur créé dans cette session.
+        Aucun partenaire créé dans cette session.
       </div>
     </section>
 
     <section class="panel">
-      <h3>Organisateurs autorisés</h3>
+      <h3>Partenaires autorisés</h3>
       <div id="organizersList" class="cards">
         <div class="info-box">Aucune donnée chargée.</div>
       </div>
@@ -87,6 +91,7 @@
   <script src="env.js"></script>
   <script src="supabase.js"></script>
   <script src="utils.js"></script>
+  <script src="nav.js"></script>
   <script src="admin.js"></script>
 </body>
 </html>
