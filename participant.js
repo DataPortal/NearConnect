@@ -15,12 +15,10 @@
   const photoModalBackdrop = nc.qs('photoModalBackdrop');
 
   const codeFromQuery = nc.getQueryCode();
-  if (codeFromQuery) {
-    publicCodeInput.value = codeFromQuery;
-  }
+  if (codeFromQuery) publicCodeInput.value = codeFromQuery;
 
   function openPhotoModal(src, caption = '') {
-    if (!src || !photoModal || !photoModalImg || !photoModalCaption) return;
+    if (!src) return;
     photoModalImg.src = src;
     photoModalCaption.textContent = caption;
     photoModal.classList.remove('hidden');
@@ -28,7 +26,6 @@
   }
 
   function closePhotoModal() {
-    if (!photoModal || !photoModalImg || !photoModalCaption) return;
     photoModal.classList.add('hidden');
     photoModalImg.src = '';
     photoModalCaption.textContent = '';
@@ -69,18 +66,10 @@
       console.log('JOIN-SPACE RAW RESPONSE:', rawText);
 
       let data = {};
-      try {
-        data = JSON.parse(rawText);
-      } catch (_) {}
+      try { data = JSON.parse(rawText); } catch (_) {}
 
       if (!resp.ok) {
-        throw new Error(
-          data?.error ||
-            data?.details ||
-            data?.message ||
-            rawText ||
-            `HTTP ${resp.status}`
-        );
+        throw new Error(data?.error || data?.details || data?.message || rawText || `HTTP ${resp.status}`);
       }
 
       nc.state.currentSpace = data.space;
@@ -91,33 +80,23 @@
       nc.qs('paymentSection')?.classList.remove('hidden');
       nc.qs('profilesSection')?.classList.remove('hidden');
 
-      const spaceInfo = nc.qs('spaceInfo');
-      if (spaceInfo) {
-        spaceInfo.innerHTML = `
-          <strong>${data.space.venue_name}</strong><br>
-          ${data.space.event_name}<br>
-          Code: ${data.space.public_code}<br>
-          Ville: ${data.space.city}<br>
-          Période: ${nc.formatDate(data.space.starts_at)} → ${nc.formatDate(data.space.ends_at)}<br>
-          Présence sur place: <strong>${data.access.in_radius ? 'Validée' : 'Refusée'}</strong><br>
-          Distance: ${data.access.distance_meters} m / ${data.access.allowed_radius_meters} m
-        `;
-      }
+      nc.qs('spaceInfo').innerHTML = `
+        <strong>${data.space.venue_name}</strong><br>
+        ${data.space.event_name}<br>
+        Code: ${data.space.public_code}<br>
+        Ville: ${data.space.city}<br>
+        Période: ${nc.formatDate(data.space.starts_at)} → ${nc.formatDate(data.space.ends_at)}<br>
+        Présence sur place: <strong>${data.access.in_radius ? 'Validée' : 'Refusée'}</strong><br>
+        Distance: ${data.access.distance_meters} m / ${data.access.allowed_radius_meters} m
+      `;
 
-      if (paymentPreview) {
-        paymentPreview.innerHTML = `
-          Débloquez tous les contacts pour <strong>${data.payment_preview.local_amount} ${data.payment_preview.currency_code}</strong>.<br>
-          Présence sur place: <strong>${data.access.in_radius ? 'Confirmée' : 'Non confirmée'}</strong>
-        `;
-      }
+      paymentPreview.innerHTML = `
+        Débloquez tous les contacts pour <strong>${data.payment_preview.local_amount} ${data.payment_preview.currency_code}</strong>.<br>
+        Présence sur place: <strong>${data.access.in_radius ? 'Confirmée' : 'Non confirmée'}</strong>
+      `;
 
       await loadProfiles();
-
-      nc.showMessage(
-        messageBox,
-        data.message || 'Espace rejoint avec succès.',
-        data.access.in_radius ? 'success' : 'info'
-      );
+      nc.showMessage(messageBox, data.message || 'Espace rejoint avec succès.', data.access.in_radius ? 'success' : 'info');
     } catch (e) {
       console.error('JOIN SPACE ERROR:', e);
       nc.showMessage(messageBox, e.message || 'Impossible de rejoindre l’espace.', 'error');
@@ -130,15 +109,13 @@
 
     try {
       const consent = nc.qs('consent')?.checked;
-      if (!consent) {
-        throw new Error('Le consentement est obligatoire.');
-      }
+      if (!consent) throw new Error('Le consentement est obligatoire.');
 
       const location = await nc.getLocation();
       const file = nc.qs('photoFile')?.files?.[0] || null;
 
-      if (file && file.size > 2 * 1024 * 1024) {
-        throw new Error('La photo est trop lourde. Choisis une image de moins de 2 MB.');
+      if (file && file.size > 5 * 1024 * 1024) {
+        throw new Error('La photo est trop lourde. Taille maximale autorisée : 5 MB.');
       }
 
       const photo_base64 = file ? await nc.fileToBase64(file) : null;
@@ -156,13 +133,6 @@
         lng: location.lng,
       };
 
-      console.log('REGISTER-PARTICIPANT BODY:', {
-        ...payload,
-        photo_base64: payload.photo_base64
-          ? `[base64 length=${payload.photo_base64.length}]`
-          : null,
-      });
-
       const resp = await fetch(`${window.NEARCONNECT_FUNCTIONS_BASE}/register-participant`, {
         method: 'POST',
         headers: {
@@ -178,9 +148,7 @@
       console.log('REGISTER-PARTICIPANT RAW RESPONSE:', rawText);
 
       let data = {};
-      try {
-        data = JSON.parse(rawText);
-      } catch (_) {}
+      try { data = JSON.parse(rawText); } catch (_) {}
 
       if (!resp.ok) {
         const detailedMessage = [
@@ -190,9 +158,7 @@
           data?.hint ? `HINT: ${data.hint}` : '',
           data?.code ? `CODE: ${data.code}` : '',
           !data?.error && rawText ? `RAW: ${rawText}` : '',
-        ]
-          .filter(Boolean)
-          .join('\n');
+        ].filter(Boolean).join('\n');
 
         throw new Error(detailedMessage || `HTTP ${resp.status}`);
       }
@@ -217,9 +183,7 @@
 
     try {
       const token = nc.state.participantToken || localStorage.getItem('nc_participant_token');
-      if (!token) {
-        throw new Error('Inscris-toi d’abord.');
-      }
+      if (!token) throw new Error('Inscris-toi d’abord.');
 
       const location = await nc.getLocation();
 
@@ -242,18 +206,10 @@
       console.log('START-PAYMENT RAW RESPONSE:', rawText);
 
       let data = {};
-      try {
-        data = JSON.parse(rawText);
-      } catch (_) {}
+      try { data = JSON.parse(rawText); } catch (_) {}
 
       if (!resp.ok) {
-        throw new Error(
-          data?.error ||
-            data?.details ||
-            data?.message ||
-            rawText ||
-            `HTTP ${resp.status}`
-        );
+        throw new Error(data?.error || data?.details || data?.message || rawText || `HTTP ${resp.status}`);
       }
 
       if (data.already_paid) {
@@ -265,20 +221,14 @@
       localStorage.setItem('nc_payment_reference', data.payment.payment_reference);
       nc.state.paymentReference = data.payment.payment_reference;
 
-      if (paymentPreview) {
-        paymentPreview.innerHTML = `
-          <strong>${data.instructions.amount} ${data.instructions.currency_code}</strong><br>
-          Destinataire: <strong>${data.instructions.recipient_msisdn}</strong><br>
-          Référence: <strong>${data.instructions.payment_reference}</strong><br>
-          ${data.instructions.message}
-        `;
-      }
+      paymentPreview.innerHTML = `
+        <strong>${data.instructions.amount} ${data.instructions.currency_code}</strong><br>
+        Destinataire: <strong>${data.instructions.recipient_msisdn}</strong><br>
+        Référence: <strong>${data.instructions.payment_reference}</strong><br>
+        ${data.instructions.message}
+      `;
 
-      nc.showMessage(
-        messageBox,
-        'Instructions de paiement générées. Confirme ensuite le paiement côté admin.',
-        'info'
-      );
+      nc.showMessage(messageBox, 'Instructions de paiement générées. Confirme ensuite le paiement côté admin.', 'info');
     } catch (e) {
       console.error('START PAYMENT ERROR:', e);
       nc.showMessage(messageBox, e.message || 'Impossible de lancer le paiement.', 'error');
@@ -327,16 +277,10 @@
     console.log('GET-UNLOCKED-PROFILES RAW RESPONSE:', rawText);
 
     let data = {};
-    try {
-      data = JSON.parse(rawText);
-    } catch (_) {}
+    try { data = JSON.parse(rawText); } catch (_) {}
 
     if (!resp.ok) {
-      nc.showMessage(
-        messageBox,
-        data?.error || data?.message || 'Impossible de charger les profils.',
-        'error'
-      );
+      nc.showMessage(messageBox, data?.error || data?.message || 'Impossible de charger les profils.', 'error');
       return;
     }
 
@@ -344,8 +288,6 @@
   }
 
   function renderProfiles(profiles) {
-    if (!profilesList) return;
-
     profilesList.innerHTML = '';
 
     if (!profiles.length) {
@@ -355,29 +297,29 @@
 
     for (const p of profiles) {
       const card = document.createElement('article');
-      card.className = 'card profile-card';
+      card.className = 'profile-mini-card';
 
       const photoUrl = p.photo_path ? nc.storagePublicUrl(p.photo_path) : '';
       const hasPhoto = Boolean(photoUrl);
 
       card.innerHTML = `
-        <div class="profile-thumb-wrap">
+        <div class="profile-mini-thumb-wrap">
           ${
             hasPhoto
-              ? `<img class="profile-thumb clickable-photo" src="${photoUrl}" alt="${p.display_name}" data-photo="${photoUrl}" data-caption="${p.display_name} • ${p.gender} • ${p.age} ans">`
-              : `<div class="profile-thumb placeholder-thumb">Photo</div>`
+              ? `<img class="profile-mini-thumb clickable-photo" src="${photoUrl}" alt="${p.display_name}" data-photo="${photoUrl}" data-caption="${p.display_name} • ${p.gender} • ${p.age} ans">`
+              : `<div class="profile-mini-thumb placeholder-thumb">Photo</div>`
           }
         </div>
-        <div class="card-body">
-          <strong>${p.display_name}</strong>
-          <div class="meta">
+        <div class="profile-mini-body">
+          <strong class="profile-name">${p.display_name}</strong>
+          <div class="profile-mini-meta">
             <span class="tag purple">${p.gender}</span>
             <span class="tag gold">${p.age} ans</span>
           </div>
           ${
             p.contact_locked
-              ? '<button class="btn btn-soft" disabled>Contact verrouillé</button>'
-              : `<a class="btn btn-success" href="${p.whatsapp_link}" target="_blank" rel="noopener">WhatsApp</a>`
+              ? '<button class="btn btn-soft btn-mini" disabled>Verrouillé</button>'
+              : `<a class="btn btn-success btn-mini" href="${p.whatsapp_link}" target="_blank" rel="noopener">WhatsApp</a>`
           }
         </div>
       `;
@@ -405,8 +347,6 @@
   refreshProfilesBtn?.addEventListener('click', loadProfiles);
 
   if (codeFromQuery) {
-    try {
-      await joinSpace();
-    } catch (_) {}
+    try { await joinSpace(); } catch (_) {}
   }
 })();
