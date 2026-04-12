@@ -12,31 +12,31 @@
   let latestQrValue = '';
   let latestQrFileName = 'nearconnect-qr.png';
 
-  function organizerCode() {
+  function partnerCode() {
     return localStorage.getItem('nc_organizer_code') || '';
   }
 
-  function organizerHeaders() {
+  function partnerHeaders() {
     return {
       'Content-Type': 'application/json',
-      'x-organizer-code': organizerCode(),
+      'x-organizer-code': partnerCode(),
       apikey: window.NEARCONNECT_SUPABASE_ANON_KEY,
       Authorization: `Bearer ${window.NEARCONNECT_SUPABASE_ANON_KEY}`,
     };
   }
 
-  function organizerGetHeaders() {
+  function partnerGetHeaders() {
     return {
-      'x-organizer-code': organizerCode(),
+      'x-organizer-code': partnerCode(),
       apikey: window.NEARCONNECT_SUPABASE_ANON_KEY,
       Authorization: `Bearer ${window.NEARCONNECT_SUPABASE_ANON_KEY}`,
     };
   }
 
-  async function callOrganizerFunction(name, method = 'POST', body = null) {
+  async function callPartnerFunction(name, method = 'POST', body = null) {
     const resp = await fetch(`${window.NEARCONNECT_FUNCTIONS_BASE}/${name}`, {
       method,
-      headers: method === 'GET' ? organizerGetHeaders() : organizerHeaders(),
+      headers: method === 'GET' ? partnerGetHeaders() : partnerHeaders(),
       body: method === 'GET' ? undefined : JSON.stringify(body),
     });
 
@@ -45,16 +45,24 @@
     console.log(`${name.toUpperCase()} RAW RESPONSE:`, rawText);
 
     let data = {};
-    try { data = JSON.parse(rawText); } catch (_) {}
+    try {
+      data = JSON.parse(rawText);
+    } catch (_) {}
 
     if (!resp.ok) {
-      throw new Error(data?.error || data?.details || data?.message || rawText || `HTTP ${resp.status}`);
+      throw new Error(
+        data?.error ||
+        data?.details ||
+        data?.message ||
+        rawText ||
+        `HTTP ${resp.status}`
+      );
     }
 
     return data;
   }
 
-  function showOrganizerSections() {
+  function showPartnerSections() {
     nc.qs('organizerIdentitySection')?.classList.remove('hidden');
     nc.qs('organizerCreateSection')?.classList.remove('hidden');
     nc.qs('organizerResultSection')?.classList.remove('hidden');
@@ -70,11 +78,15 @@
 
   async function renderQrToCanvas(canvas, value) {
     if (!value || !canvas || typeof QRCode === 'undefined') return;
+
     await QRCode.toCanvas(canvas, value, {
       width: 280,
       margin: 2,
       errorCorrectionLevel: 'H',
-      color: { dark: '#111111', light: '#ffffff' },
+      color: {
+        dark: '#111111',
+        light: '#ffffff',
+      },
     });
   }
 
@@ -86,18 +98,20 @@
 
     await renderQrToCanvas(latestQrCanvas, latestQrValue);
 
-    latestQrMeta.innerHTML = `
-      <strong>${space.event_name}</strong><br>
-      Lieu: ${space.venue_name || '-'}<br>
-      Code public: ${space.public_code}<br>
-      Ville: ${space.city}<br>
-      Profils: ${space.total_profiles || 0}<br>
-      Payés: ${space.total_paid || 0}<br>
-      Revenu: ${Number(space.total_revenue || 0).toFixed(2)} ${space.currency_code || ''}<br>
-      Début: ${nc.formatDate(space.starts_at)}<br>
-      Fin: ${nc.formatDate(space.ends_at)}<br>
-      Lien client: <a href="${space.qr_url}" target="_blank" rel="noopener">${space.qr_url}</a>
-    `;
+    if (latestQrMeta) {
+      latestQrMeta.innerHTML = `
+        <strong>${space.event_name}</strong><br>
+        Lieu: ${space.venue_name || '-'}<br>
+        Code public: ${space.public_code}<br>
+        Ville: ${space.city || '-'}<br>
+        Profils: ${space.total_profiles || 0}<br>
+        Payés: ${space.total_paid || 0}<br>
+        Revenu: ${Number(space.total_revenue || 0).toFixed(2)} ${space.currency_code || ''}<br>
+        Début: ${nc.formatDate(space.starts_at)}<br>
+        Fin: ${nc.formatDate(space.ends_at)}<br>
+        Lien client: <a href="${space.qr_url}" target="_blank" rel="noopener">${space.qr_url}</a>
+      `;
+    }
   }
 
   function downloadCanvas(canvas, filename) {
@@ -109,6 +123,8 @@
   }
 
   function renderCityStats(byCity = []) {
+    if (!organizerCityStats) return;
+
     organizerCityStats.innerHTML = '';
 
     if (!byCity.length) {
@@ -130,15 +146,18 @@
     });
   }
 
-  async function refreshOrganizerData() {
-    const data = await callOrganizerFunction('get-organizer-stats', 'GET');
+  async function refreshPartnerData() {
+    const data = await callPartnerFunction('get-organizer-stats', 'GET');
+    const partner = data.organizer || data.partner || {};
 
-    identity.innerHTML = `
-      <strong>${data.organizer.full_name}</strong><br>
-      ${data.organizer.organization_name || '-'}<br>
-      ${data.organizer.city || '-'} — ${data.organizer.country_code || '-'}<br>
-      WhatsApp: ${data.organizer.whatsapp_number || '-'}
-    `;
+    if (identity) {
+      identity.innerHTML = `
+        <strong>${partner.full_name || '-'}</strong><br>
+        ${partner.organization_name || '-'}<br>
+        ${partner.city || '-'} — ${partner.country_code || '-'}<br>
+        WhatsApp: ${partner.whatsapp_number || '-'}
+      `;
+    }
 
     nc.qs('orgTotalSpaces').textContent = String(data.summary?.total_spaces || 0);
     nc.qs('orgTotalProfiles').textContent = String(data.summary?.total_profiles || 0);
@@ -160,13 +179,13 @@
       <div class="card-body">
         <strong>${space.event_name}</strong>
         <div class="meta">
-          <span class="tag purple">${space.country_code}</span>
-          <span class="tag gold">${space.city}</span>
-          <span class="tag green">${space.status}</span>
+          <span class="tag purple">${space.country_code || '-'}</span>
+          <span class="tag gold">${space.city || '-'}</span>
+          <span class="tag green">${space.status || '-'}</span>
         </div>
         <div class="muted">
           Lieu: ${space.venue_name || '-'}<br>
-          Code public: ${space.public_code}<br>
+          Code public: ${space.public_code || '-'}<br>
           Devise: ${space.currency_code || '-'}<br>
           Fuseau: ${space.time_zone || '-'}<br>
           Profils: ${space.total_profiles || 0}<br>
@@ -192,6 +211,8 @@
   }
 
   function renderSpaces(spaces) {
+    if (!spacesList) return;
+
     spacesList.innerHTML = '';
 
     if (!spaces.length) {
@@ -216,7 +237,8 @@
         const qrUrl = card.dataset.qrUrl;
         const qrBox = document.getElementById(`qr-box-${spaceId}`);
         const qrCanvas = document.getElementById(`qr-canvas-${spaceId}`);
-        qrBox.style.display = 'block';
+
+        if (qrBox) qrBox.style.display = 'block';
         await renderQrToCanvas(qrCanvas, qrUrl);
       });
     });
@@ -239,6 +261,7 @@
           await navigator.clipboard.writeText(qrUrl);
           nc.showMessage(box, 'Lien client copié.', 'success');
         } catch (err) {
+          console.error('COPY LINK ERROR:', err);
           nc.showMessage(box, 'Impossible de copier le lien.', 'error');
         }
       });
@@ -248,10 +271,14 @@
       btn.addEventListener('click', async () => {
         try {
           const spaceId = btn.getAttribute('data-close-space');
-          const data = await callOrganizerFunction('close-organizer-space', 'POST', { space_id: spaceId });
+          const data = await callPartnerFunction('close-organizer-space', 'POST', {
+            space_id: spaceId,
+          });
+
           nc.showMessage(box, data.message || 'Espace désactivé.', 'success');
-          await refreshOrganizerData();
+          await refreshPartnerData();
         } catch (err) {
+          console.error('CLOSE PARTNER SPACE ERROR:', err);
           nc.showMessage(box, err.message || 'Erreur de désactivation.', 'error');
         }
       });
@@ -272,6 +299,7 @@
       await navigator.clipboard.writeText(latestQrValue);
       nc.showMessage(box, 'Lien client copié.', 'success');
     } catch (err) {
+      console.error('COPY LATEST LINK ERROR:', err);
       nc.showMessage(box, err.message || 'Impossible de copier le lien.', 'error');
     }
   });
@@ -282,7 +310,9 @@
 
     try {
       const accessCode = nc.qs('organizerAccessCode').value.trim().toUpperCase();
-      if (!accessCode) throw new Error('Le code d’accès partenaire est requis.');
+      if (!accessCode) {
+        throw new Error('Le code d’accès partenaire est requis.');
+      }
 
       const resp = await fetch(`${window.NEARCONNECT_FUNCTIONS_BASE}/organizer-login`, {
         method: 'POST',
@@ -295,18 +325,32 @@
       });
 
       const rawText = await resp.text();
+      console.log('ORGANIZER-LOGIN STATUS:', resp.status);
+      console.log('ORGANIZER-LOGIN RAW RESPONSE:', rawText);
+
       let data = {};
-      try { data = JSON.parse(rawText); } catch (_) {}
+      try {
+        data = JSON.parse(rawText);
+      } catch (_) {}
 
       if (!resp.ok) {
-        throw new Error(data?.error || data?.details || data?.message || rawText || `HTTP ${resp.status}`);
+        throw new Error(
+          data?.error ||
+          data?.details ||
+          data?.message ||
+          rawText ||
+          `HTTP ${resp.status}`
+        );
       }
 
       localStorage.setItem('nc_organizer_code', accessCode);
-      showOrganizerSections();
-      await refreshOrganizerData();
-      nc.showMessage(box, 'Connexion partenaire réussie.', 'success');
+
+      showPartnerSections();
+      await refreshPartnerData();
+
+      nc.showMessage(box, data.message || 'Connexion partenaire réussie.', 'success');
     } catch (err) {
+      console.error('PARTNER LOGIN ERROR:', err);
       nc.showMessage(box, err.message || 'Erreur de connexion.', 'error');
     }
   });
@@ -318,7 +362,7 @@
     try {
       const location = await nc.getLocation();
 
-      const data = await callOrganizerFunction('create-organizer-space', 'POST', {
+      const data = await callPartnerFunction('create-organizer-space', 'POST', {
         country_code: nc.qs('countryCode').value.trim().toUpperCase(),
         city: nc.qs('city').value.trim(),
         venue_name: nc.qs('venueName').value.trim(),
@@ -329,13 +373,15 @@
         longitude: location.lng,
       });
 
-      result.innerHTML = `
-        <strong>Espace créé</strong><br>
-        Événement: ${data.space.event_name}<br>
-        Code public: <strong>${data.space.public_code}</strong><br>
-        Space ID: ${data.space.id}<br>
-        Lien client: <a href="${data.qr_url}" target="_blank" rel="noopener">${data.qr_url}</a>
-      `;
+      if (result) {
+        result.innerHTML = `
+          <strong>Espace créé</strong><br>
+          Événement: ${data.space.event_name}<br>
+          Code public: <strong>${data.space.public_code}</strong><br>
+          Space ID: ${data.space.id}<br>
+          Lien client: <a href="${data.qr_url}" target="_blank" rel="noopener">${data.qr_url}</a>
+        `;
+      }
 
       const enrichedSpace = {
         ...data.space,
@@ -346,15 +392,19 @@
       };
 
       await setLatestQr(enrichedSpace);
-      nc.showMessage(box, 'Espace créé avec succès.', 'success');
-      await refreshOrganizerData();
+
+      nc.showMessage(box, data.message || 'Espace créé avec succès.', 'success');
+      await refreshPartnerData();
     } catch (err) {
+      console.error('CREATE PARTNER SPACE ERROR:', err);
       nc.showMessage(box, err.message || 'Erreur de création.', 'error');
     }
   });
 
-  if (organizerCode()) {
-    showOrganizerSections();
-    refreshOrganizerData().catch(() => {});
+  if (partnerCode()) {
+    showPartnerSections();
+    refreshPartnerData().catch((err) => {
+      console.error('AUTO REFRESH PARTNER ERROR:', err);
+    });
   }
 })();
