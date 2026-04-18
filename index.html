@@ -6,6 +6,7 @@
   <title>NearConnect Client</title>
   <link rel="stylesheet" href="style.css" />
 </head>
+
 <body class="client-body page-with-global-nav">
   <div id="globalNavMount"></div>
 
@@ -18,6 +19,7 @@
           <p>Connexion locale instantanée</p>
         </div>
       </div>
+
       <div class="nav">
         <span class="badge">Espace client</span>
       </div>
@@ -29,7 +31,8 @@
       <span class="badge">Participant</span>
       <h2>Scanne. Rejoins. Connecte.</h2>
       <p>
-        Rejoins un espace via QR code, publie ton profil temporaire et découvre les autres profils présents autour de toi.
+        Rejoins un espace via QR code, publie ton profil temporaire, découvre les profils présents autour de toi
+        et débloque les contacts WhatsApp avec tes crédits NearConnect.
       </p>
     </section>
 
@@ -54,6 +57,7 @@
           <h3>Espace actif</h3>
           <p class="muted">L’espace rejoint reste mémorisé sur ce téléphone.</p>
         </div>
+
         <div class="actions">
           <button id="changeSpaceTopBtn" class="btn btn-soft" type="button">Changer d’espace</button>
         </div>
@@ -64,13 +68,15 @@
 
     <section id="registerSection" class="panel hidden">
       <h3>Publier mon profil</h3>
+
       <form id="registerForm" class="form">
         <div class="grid-2">
           <label>Nom / Pseudo
             <input id="displayName" type="text" maxlength="20" required />
           </label>
-          <label>WhatsApp (avec indicatif pays)
-            <input id="whatsappNumber" type="text" required />
+
+          <label>WhatsApp avec indicatif pays
+            <input id="whatsappNumber" type="text" placeholder="+250..." required />
           </label>
         </div>
 
@@ -83,15 +89,17 @@
               <option value="X">X</option>
             </select>
           </label>
+
           <label>Âge
             <input id="age" type="number" min="18" max="99" required />
           </label>
         </div>
 
         <div class="grid-2">
-          <label>Photo (optionnelle, max 5 MB)
+          <label>Photo optionnelle, max 5 MB
             <input id="photoFile" type="file" accept="image/*" />
           </label>
+
           <label class="checkbox-line">
             <input id="consent" type="checkbox" required />
             <span>J’accepte la publication temporaire de mon profil pour cette soirée.</span>
@@ -105,12 +113,44 @@
     </section>
 
     <section id="paymentSection" class="panel hidden">
-      <h3>Accès premium</h3>
+      <h3>Crédits NearConnect</h3>
+
       <div id="paymentPreview" class="info-box"></div>
 
+      <div class="wallet-panel">
+        <h4>Acheter des crédits</h4>
+        <p class="muted">
+          Les crédits servent à débloquer les boutons WhatsApp des profils visibles dans cet espace.
+          Un déblocage standard coûte actuellement <strong>5 crédits</strong>.
+        </p>
+
+        <div id="creditPacks" class="credit-pack-grid">
+          <button class="credit-pack-card" data-pack-code="PACK_20" type="button">
+            <strong>20 crédits</strong>
+            <span>1 USD</span>
+          </button>
+
+          <button class="credit-pack-card" data-pack-code="PACK_50" type="button">
+            <strong>50 crédits</strong>
+            <span>2 USD</span>
+          </button>
+
+          <button class="credit-pack-card" data-pack-code="PACK_140" type="button">
+            <strong>140 crédits</strong>
+            <span>5 USD</span>
+          </button>
+
+          <button class="credit-pack-card" data-pack-code="PACK_320" type="button">
+            <strong>320 crédits</strong>
+            <span>10 USD</span>
+          </button>
+        </div>
+      </div>
+
       <div class="actions" style="margin-top: 14px;">
-        <button id="startPaymentBtn" class="btn btn-success" type="button">Débloquer tous les contacts</button>
-        <button id="refreshProfilesBtn" class="btn btn-soft" type="button">Actualiser les profils</button>
+        <button id="refreshProfilesBtn" class="btn btn-soft" type="button">
+          Actualiser les profils
+        </button>
       </div>
     </section>
 
@@ -118,7 +158,7 @@
       <div class="section-row">
         <div>
           <h3>Profils visibles</h3>
-          <p class="muted">Clique sur une photo pour l’agrandir.</p>
+          <p class="muted">Clique sur une photo pour l’agrandir. Clique sur “Débloquer” pour ouvrir WhatsApp.</p>
         </div>
       </div>
 
@@ -128,6 +168,7 @@
 
   <div id="photoModal" class="photo-modal hidden">
     <div class="photo-modal-backdrop" id="photoModalBackdrop"></div>
+
     <div class="photo-modal-content">
       <button id="photoModalClose" class="photo-modal-close" type="button">×</button>
       <img id="photoModalImg" src="" alt="Photo profil" />
@@ -142,6 +183,7 @@
   <script src="supabase.js"></script>
   <script src="utils.js"></script>
   <script src="nav.js"></script>
+  <script src="wallet.js"></script>
   <script src="participant.js"></script>
 
   <script>
