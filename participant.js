@@ -2,7 +2,6 @@
   const messageBox = nc.qs('messageBox');
   const joinForm = nc.qs('joinForm');
   const registerForm = nc.qs('registerForm');
-  const startPaymentBtn = nc.qs('startPaymentBtn');
   const refreshProfilesBtn = nc.qs('refreshProfilesBtn');
   const profilesList = nc.qs('profilesList');
   const publicCodeInput = nc.qs('publicCode');
@@ -18,14 +17,15 @@
   const savedPublicCode = localStorage.getItem('nc_last_public_code') || '';
 
   if (codeFromQuery) {
-    publicCodeInput.value = codeFromQuery;
-    localStorage.setItem('nc_last_public_code', codeFromQuery);
+    publicCodeInput.value = codeFromQuery.trim().toUpperCase();
+    localStorage.setItem('nc_last_public_code', codeFromQuery.trim().toUpperCase());
   } else if (savedPublicCode) {
-    publicCodeInput.value = savedPublicCode;
+    publicCodeInput.value = savedPublicCode.trim().toUpperCase();
   }
 
   function openPhotoModal(src, caption = '') {
-    if (!src) return;
+    if (!src || !photoModal || !photoModalImg || !photoModalCaption) return;
+
     photoModalImg.src = src;
     photoModalCaption.textContent = caption;
     photoModal.classList.remove('hidden');
@@ -33,6 +33,8 @@
   }
 
   function closePhotoModal() {
+    if (!photoModal || !photoModalImg || !photoModalCaption) return;
+
     photoModal.classList.add('hidden');
     photoModalImg.src = '';
     photoModalCaption.textContent = '';
@@ -48,17 +50,17 @@
 
   function saveClientState(space) {
     if (!space) return;
+
     nc.state.currentSpace = space;
 
     if (space.public_code) {
-      localStorage.setItem('nc_last_public_code', space.public_code);
-      if (publicCodeInput) publicCodeInput.value = space.public_code;
-    }
-  }
+      const code = String(space.public_code).trim().toUpperCase();
+      localStorage.setItem('nc_last_public_code', code);
 
-  function clearClientSpaceMemory() {
-    localStorage.removeItem('nc_last_public_code');
-    nc.state.currentSpace = null;
+      if (publicCodeInput) {
+        publicCodeInput.value = code;
+      }
+    }
   }
 
   photoModalClose?.addEventListener('click', closePhotoModal);
@@ -71,7 +73,9 @@
   });
 
   async function joinSpace({ silent = false } = {}) {
-    if (!silent) nc.hideMessage(messageBox);
+    if (!silent) {
+      nc.hideMessage(messageBox);
+    }
 
     try {
       const publicCode = publicCodeInput.value.trim().toUpperCase();
@@ -97,6 +101,7 @@
       });
 
       const rawText = await resp.text();
+
       console.log('JOIN-SPACE STATUS:', resp.status);
       console.log('JOIN-SPACE RAW RESPONSE:', rawText);
 
@@ -133,8 +138,9 @@
 
       if (paymentPreview) {
         paymentPreview.innerHTML = `
-          Débloquez tous les contacts pour <strong>${data.payment_preview.local_amount} ${data.payment_preview.currency_code}</strong>.<br>
-          Présence sur place: <strong>${data.access.in_radius ? 'Confirmée' : 'Non confirmée'}</strong>
+          Débloquez les contacts WhatsApp avec vos crédits NearConnect.<br>
+          Coût standard actuel : <strong>5 crédits par contact</strong>.<br>
+          Présence sur place : <strong>${data.access.in_radius ? 'Confirmée' : 'Non confirmée'}</strong>
         `;
       }
 
@@ -166,10 +172,13 @@
 
     try {
       const consent = nc.qs('consent')?.checked;
-      if (!consent) throw new Error('Le consentement est obligatoire.');
+
+      if (!consent) {
+        throw new Error('Le consentement est obligatoire.');
+      }
 
       const currentPublicCode =
-        (nc.state.currentSpace && nc.state.currentSpace.public_code) ||
+        nc.state.currentSpace?.public_code ||
         publicCodeInput.value.trim().toUpperCase() ||
         localStorage.getItem('nc_last_public_code') ||
         '';
@@ -188,7 +197,7 @@
       const photo_base64 = file ? await nc.fileToBase64(file) : null;
 
       const payload = {
-        public_code: currentPublicCode,
+        public_code: String(currentPublicCode).trim().toUpperCase(),
         display_name: nc.qs('displayName')?.value?.trim() || '',
         gender: nc.qs('gender')?.value || '',
         age: Number(nc.qs('age')?.value),
@@ -199,6 +208,13 @@
         lat: location.lat,
         lng: location.lng,
       };
+
+      console.log('REGISTER-PARTICIPANT BODY:', {
+        ...payload,
+        photo_base64: payload.photo_base64
+          ? `[base64 length=${payload.photo_base64.length}]`
+          : null,
+      });
 
       const resp = await fetch(`${window.NEARCONNECT_FUNCTIONS_BASE}/register-participant`, {
         method: 'POST',
@@ -211,6 +227,7 @@
       });
 
       const rawText = await resp.text();
+
       console.log('REGISTER-PARTICIPANT STATUS:', resp.status);
       console.log('REGISTER-PARTICIPANT RAW RESPONSE:', rawText);
 
@@ -241,88 +258,15 @@
       nc.state.participantId = data.participant.id;
 
       nc.showMessage(messageBox, 'Profil publié avec succès.', 'success');
+
       await loadProfiles();
       registerForm?.reset();
     } catch (e2) {
       console.error('REGISTER PARTICIPANT ERROR:', e2);
+
       nc.showMessage(
         messageBox,
         e2.message || 'Impossible de publier le profil.',
-        'error'
-      );
-    }
-  }
-
-  async function startPayment() {
-    nc.hideMessage(messageBox);
-
-    try {
-      const token = nc.state.participantToken || localStorage.getItem('nc_participant_token');
-      if (!token) throw new Error("Inscris-toi d’abord.");
-
-      const location = await nc.getLocation();
-
-      const resp = await fetch(`${window.NEARCONNECT_FUNCTIONS_BASE}/start-payment`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          apikey: window.NEARCONNECT_SUPABASE_ANON_KEY,
-          Authorization: `Bearer ${window.NEARCONNECT_SUPABASE_ANON_KEY}`,
-          'x-participant-token': token,
-        },
-        body: JSON.stringify({
-          lat: location.lat,
-          lng: location.lng,
-        }),
-      });
-
-      const rawText = await resp.text();
-      console.log('START-PAYMENT STATUS:', resp.status);
-      console.log('START-PAYMENT RAW RESPONSE:', rawText);
-
-      let data = {};
-      try {
-        data = JSON.parse(rawText);
-      } catch (_) {}
-
-      if (!resp.ok) {
-        throw new Error(
-          data?.error ||
-          data?.details ||
-          data?.message ||
-          rawText ||
-          `HTTP ${resp.status}`
-        );
-      }
-
-      if (data.already_paid) {
-        nc.showMessage(messageBox, 'Paiement déjà actif pour cet espace.', 'success');
-        await loadProfiles();
-        return;
-      }
-
-      localStorage.setItem('nc_payment_reference', data.payment.payment_reference);
-      nc.state.paymentReference = data.payment.payment_reference;
-
-      if (paymentPreview) {
-        paymentPreview.innerHTML = `
-          <strong>${data.instructions.amount} ${data.instructions.currency_code}</strong><br>
-          Destinataire: <strong>${data.instructions.recipient_msisdn}</strong><br>
-          Référence: <strong>${data.instructions.payment_reference}</strong><br>
-          ${data.instructions.message}
-        `;
-      }
-
-      nc.showMessage(
-        messageBox,
-        'Instructions de paiement générées. Confirme ensuite le paiement côté admin.',
-        'info'
-      );
-    } catch (e) {
-      console.error('START PAYMENT ERROR:', e);
-      nc.showMessage(
-        messageBox,
-        e.message || 'Impossible de lancer le paiement.',
         'error'
       );
     }
@@ -333,7 +277,10 @@
 
     profilesList.innerHTML = '';
 
-    const token = nc.state.participantToken || localStorage.getItem('nc_participant_token');
+    const token =
+      nc.state.participantToken ||
+      localStorage.getItem('nc_participant_token') ||
+      '';
 
     if (!token) {
       if (!nc.state.currentSpace?.id) return;
@@ -344,15 +291,24 @@
         .eq('space_id', nc.state.currentSpace.id)
         .order('created_at', { ascending: false });
 
-      if (!error && data) {
-        renderProfiles(
-          data.map((p) => ({
-            ...p,
-            contact_locked: true,
-            whatsapp_link: null,
-          }))
+      if (error) {
+        console.error('LOAD PUBLIC PROFILES ERROR:', error);
+        nc.showMessage(
+          messageBox,
+          error.message || 'Impossible de charger les profils publics.',
+          'error'
         );
+        return;
       }
+
+      renderProfiles(
+        (data || []).map((p) => ({
+          ...p,
+          contact_locked: true,
+          whatsapp_link: null,
+        }))
+      );
+
       return;
     }
 
@@ -366,6 +322,7 @@
     });
 
     const rawText = await resp.text();
+
     console.log('GET-UNLOCKED-PROFILES STATUS:', resp.status);
     console.log('GET-UNLOCKED-PROFILES RAW RESPONSE:', rawText);
 
@@ -387,6 +344,8 @@
   }
 
   function renderProfiles(profiles) {
+    if (!profilesList) return;
+
     profilesList.innerHTML = '';
 
     if (!profiles.length) {
@@ -402,6 +361,9 @@
       const photoUrl = p.photo_path ? nc.storagePublicUrl(p.photo_path) : '';
       const hasPhoto = Boolean(photoUrl);
 
+      const isLocked = Boolean(p.contact_locked);
+      const whatsappLink = p.whatsapp_link || '';
+
       card.innerHTML = `
         <div class="profile-mini-thumb-wrap">
           ${
@@ -410,16 +372,19 @@
               : `<div class="profile-mini-thumb placeholder-thumb">Photo</div>`
           }
         </div>
+
         <div class="profile-mini-body">
           <strong class="profile-name">${p.display_name}</strong>
+
           <div class="profile-mini-meta">
             <span class="tag purple">${p.gender}</span>
             <span class="tag gold">${p.age} ans</span>
           </div>
+
           ${
-            p.contact_locked
-              ? '<button class="btn btn-soft btn-mini" disabled>Verrouillé</button>'
-              : `<a class="btn btn-success btn-mini" href="${p.whatsapp_link}" target="_blank" rel="noopener">WhatsApp</a>`
+            isLocked
+              ? `<button class="btn btn-soft btn-mini unlock-contact-btn" data-target-id="${p.id}" type="button">Débloquer</button>`
+              : `<a class="btn btn-success btn-mini" href="${whatsappLink}" target="_blank" rel="noopener">WhatsApp</a>`
           }
         </div>
       `;
@@ -435,6 +400,10 @@
         );
       });
     });
+
+    if (window.ncWallet) {
+      window.ncWallet.bindUnlockButtons(loadProfiles);
+    }
   }
 
   joinForm?.addEventListener('submit', async (e) => {
@@ -443,8 +412,14 @@
   });
 
   registerForm?.addEventListener('submit', registerParticipant);
-  startPaymentBtn?.addEventListener('click', startPayment);
-  refreshProfilesBtn?.addEventListener('click', loadProfiles);
+
+  refreshProfilesBtn?.addEventListener('click', async () => {
+    await loadProfiles();
+  });
+
+  if (window.ncWallet) {
+    window.ncWallet.bindCreditPackButtons();
+  }
 
   const codeToRestore =
     codeFromQuery ||
@@ -452,7 +427,8 @@
     publicCodeInput.value.trim();
 
   if (codeToRestore) {
-    publicCodeInput.value = codeToRestore.toUpperCase();
+    publicCodeInput.value = String(codeToRestore).trim().toUpperCase();
+
     try {
       await joinSpace({ silent: true });
     } catch (_) {}
